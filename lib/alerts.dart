@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'complex_button.dart';
-import 'helpers.dart';
 
 class AlertHandler {
   //top icon dialog with 1 or two selection button

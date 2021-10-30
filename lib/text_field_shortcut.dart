@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'helpers.dart';
-
 ///Text Field oluşumunu sağlayan sınıf
 
 // ignore: must_be_immutable
@@ -118,5 +116,4 @@ InputDecoration kTextFieldDecoration(
         borderSide: BorderSide(color: Colors.lightGreen, width: 2.0),
         borderRadius: BorderRadius.all(Radius.circular(10.0)),
       ),
-      //todo daha şık bir textfield al..
     );

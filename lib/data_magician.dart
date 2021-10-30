@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mean_lib/statefull_wrapper.dart';
 
-import 'helpers.dart';
-
 //future ile data çekme
 class DataMagicianFuture extends StatelessWidget {
   //properties: success trigger / dataLoadMethod / onError / onSuccess / onLoading
