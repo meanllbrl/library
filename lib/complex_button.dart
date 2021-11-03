@@ -64,13 +64,6 @@ class ComplexButton extends StatelessWidget {
         decoration: BoxDecoration(
           boxShadow: shadow != null ? [shadow!] : [],
           color: backgroundColor,
-          border: Border(
-            top: border
-                ? BorderSide(
-                    color: borderColor ?? Colors.transparent,
-                  )
-                : BorderSide(color: Colors.transparent),
-          ),
           borderRadius: BorderRadius.circular(radius ?? 0),
         ),
         child: Center(
