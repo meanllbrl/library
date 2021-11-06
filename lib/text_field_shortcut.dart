@@ -16,6 +16,7 @@ class TextFieldShortCut extends StatelessWidget {
   final TextStyle defaultTextStyles;
   final TextStyle? hintStyle;
   final TextStyle? labelStyle;
+  final bool isLabelOnTop;
   // ignore: use_key_in_widget_constructors
   TextFieldShortCut({
     this.hintText = "",
@@ -31,6 +32,7 @@ class TextFieldShortCut extends StatelessWidget {
     required this.defaultTextStyles,
     this.hintStyle,
     this.labelStyle,
+    this.isLabelOnTop = true,
   });
 
   @override
@@ -45,13 +47,19 @@ class TextFieldShortCut extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            labelText ?? "",
-            style: Theme.of(context).textTheme.bodyText1,
-          ),
-          const SizedBox(
-            height: 5,
-          ),
+          isLabelOnTop
+              ? Column(
+                  children: [
+                    Text(
+                      labelText ?? "",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                  ],
+                )
+              : Container(),
           TextField(
             onChanged: (value) {
               onChanged(value);
@@ -64,19 +72,19 @@ class TextFieldShortCut extends StatelessWidget {
             minLines: minLines,
 
             decoration: kTextFieldDecoration(
-                preIcon: icon == null
-                    ? null
-                    : Icon(
-                        icon,
-                        color: Colors.white,
-                        size: icon == null ? 0 : 25,
-                      ),
-                context: context,
-                hintText: hintText,
-                hintStyle: hintStyle,
-                labelStyle: labelStyle
-                //labelText: labelText,
-                ),
+              preIcon: icon == null
+                  ? null
+                  : Icon(
+                      icon,
+                      color: Colors.white,
+                      size: icon == null ? 0 : 25,
+                    ),
+              context: context,
+              hintText: hintText,
+              hintStyle: hintStyle,
+              labelStyle: labelStyle,
+              labelText: isLabelOnTop ? null : labelText,
+            ),
           ),
         ],
       ),
