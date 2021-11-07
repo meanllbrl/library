@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class TextFieldShortCut extends StatelessWidget {
   final bool isPassword;
   final String? hintText, labelText;
-  final IconData? icon;
+  final dynamic? icon;
   final Function onChanged;
   final int maxLines;
   final int minLines;
@@ -17,6 +17,7 @@ class TextFieldShortCut extends StatelessWidget {
   final TextStyle? hintStyle;
   final TextStyle? labelStyle;
   final bool isLabelOnTop;
+  final bool isSuffix;
   // ignore: use_key_in_widget_constructors
   TextFieldShortCut({
     this.hintText = "",
@@ -33,6 +34,7 @@ class TextFieldShortCut extends StatelessWidget {
     this.hintStyle,
     this.labelStyle,
     this.isLabelOnTop = true,
+    this.isSuffix = false,
   });
 
   @override
@@ -52,7 +54,7 @@ class TextFieldShortCut extends StatelessWidget {
                   children: [
                     Text(
                       labelText ?? "",
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: labelStyle ?? Theme.of(context).textTheme.bodyText1,
                     ),
                     const SizedBox(
                       height: 5,
@@ -72,13 +74,16 @@ class TextFieldShortCut extends StatelessWidget {
             minLines: minLines,
 
             decoration: kTextFieldDecoration(
-              preIcon: icon == null
+              preIcon: icon == null || isSuffix
                   ? null
                   : Icon(
                       icon,
                       color: Colors.white,
                       size: icon == null ? 0 : 25,
                     ),
+              suffixIcon: isSuffix
+                  ? icon
+                  : null,
               context: context,
               hintText: hintText,
               hintStyle: hintStyle,
@@ -92,18 +97,21 @@ class TextFieldShortCut extends StatelessWidget {
   }
 }
 
-InputDecoration kTextFieldDecoration(
-        {context,
-        hintText,
-        labelText,
-        preIcon,
-        required hintStyle,
-        required labelStyle}) =>
+InputDecoration kTextFieldDecoration({
+  context,
+  hintText,
+  labelText,
+  preIcon,
+  suffixIcon,
+  required hintStyle,
+  required labelStyle,
+}) =>
     InputDecoration(
       hintText: hintText,
       labelText: labelText,
       prefixIcon: preIcon,
       //textStyles
+      suffixIcon: suffixIcon,
       hintStyle: hintStyle,
 
       labelStyle: labelStyle,
