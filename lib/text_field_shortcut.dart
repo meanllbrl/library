@@ -68,7 +68,7 @@ class TextFieldShortCut extends StatelessWidget {
             },
             controller: textEditingController,
             //the text style
-            style: TextStyle(),
+            style: defaultTextStyles,
             obscureText: isPassword,
             maxLines: maxLines,
             minLines: minLines,
