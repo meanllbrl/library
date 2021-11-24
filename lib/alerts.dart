@@ -214,6 +214,6 @@ class AlertHandler {
       onWillPopActive: onWillPop ?? false,
       type: alertType ?? AlertType.none,
       buttons: buttons,
-    );
+    ).show();
   }
 }
