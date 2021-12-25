@@ -20,7 +20,7 @@ class ComplexButton extends StatelessWidget {
       this.textWidget,
       this.feedbackColor,
       this.elevation,
-      this.shadow});
+      this.shadow,this.gradient});
   final Function onPressed;
   final String? text;
   final Color backgroundColor;
@@ -37,6 +37,7 @@ class ComplexButton extends StatelessWidget {
   final Color? feedbackColor;
   final Widget? textWidget;
   final BoxShadow? shadow;
+  final Gradient? gradient;
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -62,6 +63,7 @@ class ComplexButton extends StatelessWidget {
         width: width ?? size.width / 4,
         margin: EdgeInsets.symmetric(horizontal: margin),
         decoration: BoxDecoration(
+          gradient:gradient,
           boxShadow: shadow != null ? [shadow!] : [],
           color: backgroundColor,
           borderRadius: BorderRadius.circular(radius ?? 0),
