@@ -102,6 +102,7 @@ class AlertHandler {
                         onPressed: onTapFirst,
                         backgroundColor: buttonStyle.backgroundColor,
                         borderColor: buttonStyle.borderColor,
+                        border: buttonStyle.borderColor!= null,
                         
                         textStyle: buttonStyle.textStyle,
                         text: but1,
@@ -118,6 +119,8 @@ class AlertHandler {
                               backgroundColor: buttonStyle.backgroundColor,
                               borderColor: buttonStyle.borderColor,
                               textStyle: buttonStyle.textStyle,
+                        border: buttonStyle.borderColor!= null,
+
                               text: but2,
                             )
                           : Container(),
