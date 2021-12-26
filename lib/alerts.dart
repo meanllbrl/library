@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'complex_button.dart';
 
+class ComplexButtonStyle {
+  final Color backgroundColor;
+  final Color textColor;
+  final Color borderColor;
+  final double borderRadius;
+  ComplexButtonStyle({this.backgroundColor = Colors.black,this.borderColor=Colors.white,this.borderRadius=0,this.textColor=Colors.white});
+}
+
 class AlertHandler {
   //top icon dialog with 1 or two selection button
   static const double _padding = 20;
@@ -22,7 +30,7 @@ class AlertHandler {
       required singleButton,
       onPressedInfo,
       headlineStyle,
-      bodyStyle}) {
+      bodyStyle,required ComplexButtonStyle? buttonStyle}) {
     //the body of the alert
     _contentBox(
         context,
@@ -38,7 +46,7 @@ class AlertHandler {
         bool textField,
         onPressedInfo,
         headlineStyle,
-        bodyStyle) {
+        bodyStyle,ComplexButtonStyle buttonStyle) {
       Size size = MediaQuery.of(context).size;
       return Stack(
         children: <Widget>[
@@ -84,9 +92,11 @@ class AlertHandler {
                       ComplexButton(
                         height: 40,
                         width: size.width / 5,
+                        radius: buttonStyle.borderRadius,
                         onPressed: onTapFirst,
-                        backgroundColor: Colors.black,
-                        borderColor: Colors.black,
+                        backgroundColor: buttonStyle.backgroundColor,
+                        borderColor: buttonStyle.borderColor,
+                        textColor: buttonStyle.textColor,
                         text: but1,
                       ),
                       const SizedBox(
@@ -94,12 +104,14 @@ class AlertHandler {
                       ),
                       !singleButton
                           ? ComplexButton(
-                              height: 40,
-                              width: size.width / 5,
-                              text: but2,
-                              onPressed: onTapSecond,
-                              backgroundColor: Colors.black,
-                              borderColor: Colors.black)
+                        height: 40,
+                        width: size.width / 5,
+                        radius: buttonStyle.borderRadius,
+                        onPressed: onTapSecond,
+                        backgroundColor: buttonStyle.backgroundColor,
+                        borderColor: buttonStyle.borderColor,
+                        text: but1.copyWith(color:buttonStyle.textColor),
+                      )
                           : Container(),
                       const SizedBox(
                         width: 10,
@@ -137,7 +149,7 @@ class AlertHandler {
             textField,
             onPressedInfo,
             headlineStyle,
-            bodyStyle) =>
+            bodyStyle,ComplexButtonStyle buttonStyle) =>
         Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_padding),
@@ -158,7 +170,7 @@ class AlertHandler {
               textField,
               onPressedInfo,
               headlineStyle,
-              bodyStyle),
+              bodyStyle,buttonStyle),
         );
     showDialog(
         context: context,
@@ -180,7 +192,7 @@ class AlertHandler {
                   false,
                   onPressedInfo,
                   headlineStyle,
-                  bodyStyle));
+                  bodyStyle,buttonStyle!));
         });
   }
 
