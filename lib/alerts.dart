@@ -84,6 +84,8 @@ class AlertHandler {
                     style: headlineStyle,
                     overflow: TextOverflow.ellipsis,
                   ),
+                                    SizedBox(height: 10,),
+
                   Text(
                     desc,
                     style: bodyStyle,
