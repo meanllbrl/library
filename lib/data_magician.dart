@@ -73,29 +73,32 @@ class DataMagicianProvider extends StatelessWidget {
       this.errorWidget,
       this.defaultTextStyle = const TextStyle()})
       : super(key: key);
-  final Function loadDataFunction;
+  final Function<Future> loadDataFunction;
   final Function? onError;
   final bool triggerCondition;
   final Widget? ui;
   final Widget? placeHolder;
   final Widget? errorWidget;
   final TextStyle defaultTextStyle;
-
+  final Function onFinished;
   bool hasErrorOccured = false;
   @override
   Widget build(BuildContext context) {
     return StatefulWrapper(
       onInit: () {
         //triggera bakılmalı burada.
-        try {
-          loadDataFunction();
+        if(triggerCondition){ try {
+          loadDataFunction().then((value){
+            onFinished();
+          });
         } catch (e) {
           debugPrint(e.toString());
           hasErrorOccured = true;
           if (onError != null) {
             onError!();
           }
-        }
+        }}
+       
       },
       child: hasErrorOccured
           ? errorWidget ??
