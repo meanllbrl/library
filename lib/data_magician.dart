@@ -88,7 +88,7 @@ class DataMagicianProvider extends StatelessWidget {
     return StatefulWrapper(
       onInit: () {
         //triggera bakılmalı burada.
-        if(triggerCondition){ try {
+        if(!triggerCondition){ try {
           loadDataFunction().then((value){
             if (onFinished!=null) {
               onFinished!();
