@@ -46,6 +46,8 @@ class LocalDBService {
     return await openDatabase(path);
   }
 
+
+
   void create({required String tableName, required String parameters}) async {
     await _init().then((db) async {
       var batch = db.batch();
@@ -79,12 +81,12 @@ class LocalDBService {
     });
   }
 
-  void read(
+  Future<List<dynamic?>> read(
       {required String parameters,
       required String tableName,
       String? lastStatement = "",
       bool prints = false}) async {
-    await _init().then((db) async {
+   return await _init().then((db) async {
       var batch = db.batch();
       batch.rawQuery(
         """
@@ -99,7 +101,7 @@ class LocalDBService {
           print(element);
         });
       }
-
+      return result;
       await db.close();
     });
   }
