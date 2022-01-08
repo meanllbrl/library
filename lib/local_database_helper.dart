@@ -1,36 +1,137 @@
-import 'package:sqlite3/sqlite3.dart';
-import 'dart:core';
+import 'dart:io';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path_provider/path_provider.dart';
 
-class LocalDbHelper {
-  var db;
-  void init() => db = sqlite3.openInMemory();
-  void create(String createTable) {
-    try {
-      db.execute("CREATE TABLE $createTable");
-    } catch (e) {
-      print("Eklemede hata!!!");
-      print(e.toString());
-    }
+
+
+/*
+NESNE 
+LocalDBService dbService = LocalDBService(name: "batch.db");
+CREAE
+dbService.create(
+              tableName: "test2", 
+              parameters: "name TEXT,surname TEXT");
+INSERT
+dbService.insert(
+              tableName: "test2",
+              parameters: "name,surname",
+              values: ["asdsad", "asdasd"]);
+READ
+dbService.read(
+              parameters: "*", 
+              tableName: "test2", 
+              prints: true);
+UPDATE          
+dbService.update(
+            sqlState: """
+            UPDATE test2 SET name = 'wewe' WHERE name = 'asdsad'
+            """,
+          );
+DELETE
+dbService.delete(
+              tableName: "test2", 
+              whereStatement: """WHERE name = 'asdsad'""");
+     */
+
+class LocalDBService {
+  final String name;
+
+  LocalDBService({required this.name});
+
+  /// Batch test page.
+  Future<Database> _init() async {
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, name);
+    return await openDatabase(path);
   }
 
-  void insertData({required dataToInsert, required String insertInto}) {
-    final stmt = db.prepare('INSERT INTO $insertInto VALUES(?)');
-    dataToInsert.forEach((element) {
-      stmt..execute([element]);
+  void create({required String tableName, required String parameters}) async {
+    await _init().then((db) async {
+      var batch = db.batch();
+      batch.execute(
+        """ 
+        CREATE TABLE $tableName 
+        ($parameters)
+        """,
+      );
+      await batch.commit().then((value) async => await db.close());
     });
-    stmt.dispose();
   }
 
-  ResultSet read(String selectStatement, {bool prints = false}) {
-    final resultSet = db.select(selectStatement);
-    if (prints) {
-      resultSet.forEach((element) {
-        print(element);
+  void insert(
+      {required String tableName,
+      required String parameters,
+      required List values}) async {
+    await _init().then((db) async {
+      var batch = db.batch();
+ String nValues = "";
+      int index = 0;
+      values.forEach((element) { 
+        nValues =nValues + (index==0 ?"": "," ) + "?" ;
+        index++;
       });
-    }
-
-    return resultSet;
+      batch.rawInsert("""
+        INSERT INTO ${tableName.replaceAll(",", ",")}
+        ($parameters) VALUES($nValues)
+        """, values);
+      await batch.commit().then((value) async => await db.close());
+    });
   }
 
-  void dispose() => db.dispose();
+  void read(
+      {required String parameters,
+      required String tableName,
+      String? lastStatement = "",
+      bool prints = false}) async {
+    await _init().then((db) async {
+      var batch = db.batch();
+      batch.rawQuery(
+        """
+        SELECT $parameters 
+        FROM $tableName
+        $lastStatement
+        """,
+      );
+      List result = await batch.commit();
+      if (prints) {
+        result.forEach((element) {
+          print(element);
+        });
+      }
+
+      await db.close();
+    });
+  }
+
+  void delete({required String tableName,required String whereStatement})async {
+    await _init().then((db) async {
+      var batch = db.batch();
+      batch.rawQuery(
+        """
+      DELETE FROM $tableName 
+      $whereStatement
+        """,
+      );
+      
+      await batch.commit().then((value) async=>await db.close() )
+     
+
+      ;
+    });
+  }
+
+  void update({required String sqlState}) async{
+       await _init().then((db) async {
+      var batch = db.batch();
+      batch.rawQuery(
+       sqlState,
+      );
+      
+      await batch.commit().then((value) async=>await db.close() )
+     
+
+      ;
+    });
+  }
 }
