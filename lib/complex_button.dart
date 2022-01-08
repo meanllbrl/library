@@ -66,6 +66,7 @@ class ComplexButton extends StatelessWidget {
           gradient:gradient,
           boxShadow: shadow != null ? [shadow!] : [],
           color: backgroundColor,
+          border:  border ? Border.all(color: borderColor ?? Colors.grey, width: 2) : null,
           borderRadius: BorderRadius.circular(radius ?? 0),
         ),
         child: Center(
