@@ -4,12 +4,12 @@ import 'complex_button.dart';
 
 class ComplexButtonStyle {
   final Color backgroundColor;
-  final Color borderColor;
+  final Color? borderColor;
   final double borderRadius;
   final TextStyle textStyle;
   ComplexButtonStyle(
       {this.backgroundColor = Colors.black,
-      this.borderColor = Colors.white,
+      this.borderColor,
       this.borderRadius = 0,
        required this.textStyle});
 }
@@ -35,7 +35,7 @@ class AlertHandler {
       onPressedInfo,
       headlineStyle,
       bodyStyle,
-      required ComplexButtonStyle? buttonStyle}) {
+      required ComplexButtonStyle button1Style, ComplexButtonStyle? button2Style}) {
     //the body of the alert
     _contentBox(
         context,
@@ -52,7 +52,7 @@ class AlertHandler {
         onPressedInfo,
         headlineStyle,
         bodyStyle,
-        ComplexButtonStyle buttonStyle) {
+        ComplexButtonStyle button1Style,ComplexButtonStyle? button2Style) {
       Size size = MediaQuery.of(context).size;
       return Stack(
         children: <Widget>[
@@ -100,13 +100,13 @@ class AlertHandler {
                       ComplexButton(
                         height: 40,
                         width: size.width / 5,
-                        radius: buttonStyle.borderRadius,
+                        radius: button1Style.borderRadius,
                         onPressed: onTapFirst,
-                        backgroundColor: buttonStyle.backgroundColor,
-                        borderColor: buttonStyle.borderColor,
-                        border: buttonStyle.borderColor!= null,
+                        backgroundColor: button1Style.backgroundColor,
+                        borderColor: button1Style.borderColor,
+                        border: button1Style.borderColor!= null,
                         
-                        textStyle: buttonStyle.textStyle,
+                        textStyle: button1Style.textStyle,
                         text: but1,
                       ),
                       const SizedBox(
@@ -116,12 +116,12 @@ class AlertHandler {
                           ? ComplexButton(
                               height: 40,
                               width: size.width / 5,
-                              radius: buttonStyle.borderRadius,
+                              radius: button2Style!=null ? button2Style.borderRadius : button1Style.borderRadius,
                               onPressed: onTapSecond,
-                              backgroundColor: buttonStyle.backgroundColor,
-                              borderColor: buttonStyle.borderColor,
-                              textStyle: buttonStyle.textStyle,
-                        border: buttonStyle.borderColor!= null,
+                              backgroundColor: button2Style!=null ? button2Style.backgroundColor : button1Style.backgroundColor,
+                              borderColor: button2Style!=null ? button2Style.borderColor : button1Style.borderColor,
+                              textStyle: button2Style!=null ? button2Style.textStyle : button1Style.textStyle,
+                        border: button2Style!=null ? button2Style.borderColor!= null : button1Style.borderColor!=null,
 
                               text: but2,
                             )
@@ -163,7 +163,8 @@ class AlertHandler {
             onPressedInfo,
             headlineStyle,
             bodyStyle,
-            ComplexButtonStyle buttonStyle) =>
+            ComplexButtonStyle button1Style,
+            ComplexButtonStyle? button2Style) =>
         Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_padding),
@@ -185,7 +186,8 @@ class AlertHandler {
               onPressedInfo,
               headlineStyle,
               bodyStyle,
-              buttonStyle),
+              button1Style,
+              button2Style),
         );
     showDialog(
         context: context,
@@ -208,7 +210,8 @@ class AlertHandler {
                   onPressedInfo,
                   headlineStyle,
                   bodyStyle,
-                  buttonStyle!));
+                  button1Style,
+                  button2Style ?? button1Style));
         });
   }
 
