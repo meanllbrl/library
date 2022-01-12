@@ -114,9 +114,9 @@ class LocalDBService {
         result.forEach((element) {
           print(element);
         });
-      }
+      }  await db.close();
       return result;
-      await db.close();
+    
     });
   }
 
