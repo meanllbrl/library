@@ -3,8 +3,6 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
-
-
 /*
 NESNE 
 LocalDBService dbService = LocalDBService(name: "batch.db");
@@ -17,6 +15,13 @@ dbService.insert(
               tableName: "test2",
               parameters: "name,surname",
               values: ["asdsad", "asdasd"]);
+              
+MULTIPLE INSERT
+dbService.insert(
+              tableName: "test2",
+              parameters: "name,surname",
+              multiple:true,
+              values: [["asdsad", "asdasd"],["asdsad", "asdasd"]]);
 READ
 dbService.read(
               parameters: "*", 
@@ -46,8 +51,6 @@ class LocalDBService {
     return await openDatabase(path);
   }
 
-
-
   void create({required String tableName, required String parameters}) async {
     await _init().then((db) async {
       var batch = db.batch();
@@ -64,19 +67,30 @@ class LocalDBService {
   void insert(
       {required String tableName,
       required String parameters,
-      required List values}) async {
+      required List values,
+      bool multipleInsert = false}) async {
     await _init().then((db) async {
       var batch = db.batch();
- String nValues = "";
+      String nValues = "";
       int index = 0;
-      values.forEach((element) { 
-        nValues =nValues + (index==0 ?"": "," ) + "?" ;
+      values.forEach((element) {
+        nValues = nValues + (index == 0 ? "" : ",") + "?";
         index++;
       });
-      batch.rawInsert("""
+      if (multipleInsert) {
+        values.forEach((element) {
+          batch.rawInsert("""
+        INSERT INTO ${tableName.replaceAll(",", ",")}
+        ($parameters) VALUES($nValues)
+        """, element);
+        });
+      } else {
+        batch.rawInsert("""
         INSERT INTO ${tableName.replaceAll(",", ",")}
         ($parameters) VALUES($nValues)
         """, values);
+      }
+
       await batch.commit().then((value) async => await db.close());
     });
   }
@@ -86,7 +100,7 @@ class LocalDBService {
       required String tableName,
       String? lastStatement = "",
       bool prints = false}) async {
-   return await _init().then((db) async {
+    return await _init().then((db) async {
       var batch = db.batch();
       batch.rawQuery(
         """
@@ -106,7 +120,8 @@ class LocalDBService {
     });
   }
 
-  void delete({required String tableName,required String whereStatement})async {
+  void delete(
+      {required String tableName, required String whereStatement}) async {
     await _init().then((db) async {
       var batch = db.batch();
       batch.rawQuery(
@@ -115,25 +130,19 @@ class LocalDBService {
       $whereStatement
         """,
       );
-      
-      await batch.commit().then((value) async=>await db.close() )
-     
 
-      ;
+      await batch.commit().then((value) async => await db.close());
     });
   }
 
-  void update({required String sqlState}) async{
-       await _init().then((db) async {
+  void update({required String sqlState}) async {
+    await _init().then((db) async {
       var batch = db.batch();
       batch.rawQuery(
-       sqlState,
+        sqlState,
       );
-      
-      await batch.commit().then((value) async=>await db.close() )
-     
 
-      ;
+      await batch.commit().then((value) async => await db.close());
     });
   }
 }
