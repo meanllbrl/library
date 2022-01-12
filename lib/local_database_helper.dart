@@ -72,11 +72,11 @@ class LocalDBService {
     await _init().then((db) async {
       var batch = db.batch();
       String nValues = "";
-      int index = 0;
-      values.forEach((element) {
-        nValues = nValues + (index == 0 ? "" : ",") + "?";
-        index++;
-      });
+      for (var i = 0; i < (multipleInsert ? values[0].length : values.length); i++) {
+         nValues = nValues + (i == 0 ? "" : ",") + "?";
+      }
+      
+      
       if (multipleInsert) {
         values.forEach((element) {
           batch.rawInsert("""
