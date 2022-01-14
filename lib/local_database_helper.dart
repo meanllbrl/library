@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:mean_lib/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -38,6 +39,7 @@ dbService.delete(
               tableName: "test2", 
               whereStatement: """WHERE name = 'asdsad'""");
      */
+Database? _DATABASE;
 
 class LocalDBService {
   final String name;
@@ -45,16 +47,32 @@ class LocalDBService {
   LocalDBService({required this.name});
 
   /// Batch test page.
-  Future<Database> _init() async {
+  Future<void> _init() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, name);
-    return await openDatabase(path);
+    if (_DATABASE == null) {
+      _DATABASE = await openDatabase(path);
+    } else {
+      if (_DATABASE!.isOpen) {
+        Logger.warning("Database Zaten Açık");
+      } else {
+        _DATABASE = await openDatabase(path);
+      }
+    }
+  }
+
+  Future<void> close() async {
+    if (_DATABASE != null) {
+      if (_DATABASE!.isOpen) {
+        await _DATABASE!.close();
+      }
+    }
   }
 
   void create({required String tableName, required String parameters}) async {
     await _init().then((db) async {
-      var batch = db.batch();
-      tableIsEmpty(tableName, db, () async {
+      var batch = _DATABASE!.batch();
+      tableIsEmpty(tableName, _DATABASE, () async {
         batch.execute(
           """ 
         CREATE TABLE $tableName 
@@ -63,7 +81,7 @@ class LocalDBService {
         );
       });
 
-      await batch.commit().then((value) async => await db.close());
+      await batch.commit();
     });
   }
 
@@ -73,7 +91,7 @@ class LocalDBService {
       required List values,
       bool multipleInsert = false}) async {
     await _init().then((db) async {
-      var batch = db.batch();
+      var batch = _DATABASE!.batch();
       String nValues = "";
       for (var i = 0;
           i < (multipleInsert ? values[0].length : values.length);
@@ -95,7 +113,7 @@ class LocalDBService {
         """, values);
       }
 
-      await batch.commit().then((value) async => await db.close());
+      await batch.commit();
     });
   }
 
@@ -105,7 +123,7 @@ class LocalDBService {
       String? lastStatement = "",
       bool prints = false}) async {
     return await _init().then((db) async {
-      var batch = db.batch();
+      var batch = _DATABASE!.batch();
       batch.rawQuery(
         """
         SELECT $parameters 
@@ -120,14 +138,14 @@ class LocalDBService {
         });
       }
       return result;
-      await db.close();
+      
     });
   }
 
   void delete(
       {required String tableName, required String whereStatement}) async {
     await _init().then((db) async {
-      var batch = db.batch();
+      var batch = _DATABASE!.batch();
       batch.rawQuery(
         """
       DELETE FROM $tableName 
@@ -135,18 +153,18 @@ class LocalDBService {
         """,
       );
 
-      await batch.commit().then((value) async => await db.close());
+      await batch.commit();
     });
   }
 
   void update({required String sqlState}) async {
     await _init().then((db) async {
-      var batch = db.batch();
+      var batch = _DATABASE!.batch();
       batch.rawQuery(
         sqlState,
       );
 
-      await batch.commit().then((value) async => await db.close());
+      await batch.commit();
     });
   }
 
