@@ -54,12 +54,15 @@ class LocalDBService {
   void create({required String tableName, required String parameters}) async {
     await _init().then((db) async {
       var batch = db.batch();
-      batch.execute(
-        """ 
+      tableIsEmpty(tableName, db, () async {
+        batch.execute(
+          """ 
         CREATE TABLE $tableName 
         ($parameters)
         """,
-      );
+        );
+      });
+
       await batch.commit().then((value) async => await db.close());
     });
   }
@@ -72,11 +75,12 @@ class LocalDBService {
     await _init().then((db) async {
       var batch = db.batch();
       String nValues = "";
-      for (var i = 0; i < (multipleInsert ? values[0].length : values.length); i++) {
-         nValues = nValues + (i == 0 ? "" : ",") + "?";
+      for (var i = 0;
+          i < (multipleInsert ? values[0].length : values.length);
+          i++) {
+        nValues = nValues + (i == 0 ? "" : ",") + "?";
       }
-      
-      
+
       if (multipleInsert) {
         values.forEach((element) {
           batch.rawInsert("""
@@ -114,9 +118,9 @@ class LocalDBService {
         result.forEach((element) {
           print(element);
         });
-      }  await db.close();
+      }
       return result;
-    
+      await db.close();
     });
   }
 
@@ -144,5 +148,14 @@ class LocalDBService {
 
       await batch.commit().then((value) async => await db.close());
     });
+  }
+
+  void tableIsEmpty(String tableName, db, Function ifNotExist) async {
+    try {
+      int? count = Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM $tableName'));
+    } catch (e) {
+      ifNotExist();
+    }
   }
 }
