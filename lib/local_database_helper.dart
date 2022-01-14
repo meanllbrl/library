@@ -53,17 +53,17 @@ class LocalDBService {
     if (_DATABASE == null) {
       _DATABASE = await openDatabase(path);
     } else {
-      if (_DATABASE!.isOpen) {
-        Logger.warning("Database Zaten Açık");
-      } else {
+      if (!_DATABASE!.isOpen) {
         _DATABASE = await openDatabase(path);
-      }
+
+      } 
     }
   }
 
   Future<void> close() async {
     if (_DATABASE != null) {
       if (_DATABASE!.isOpen) {
+        Logger.success("Database Kapatılıyor");
         await _DATABASE!.close();
       }
     }
@@ -138,7 +138,6 @@ class LocalDBService {
         });
       }
       return result;
-      
     });
   }
 
