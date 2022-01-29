@@ -55,8 +55,7 @@ class LocalDBService {
     } else {
       if (!_DATABASE!.isOpen) {
         _DATABASE = await openDatabase(path);
-
-      } 
+      }
     }
   }
 
@@ -121,6 +120,7 @@ class LocalDBService {
       {required String parameters,
       required String tableName,
       String? lastStatement = "",
+      String where = "",
       bool prints = false}) async {
     return await _init().then((db) async {
       var batch = _DATABASE!.batch();
@@ -128,6 +128,7 @@ class LocalDBService {
         """
         SELECT $parameters 
         FROM $tableName
+        WHERE ${where.isEmpty ? true : where}
         $lastStatement
         """,
       );

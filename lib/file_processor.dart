@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 
-class ImageProcessor {
+enum IPtype { image, audio, video, media, any }
+
+class FileProccessor {
   final String retFromUrl;
   final double maxSizeAsMB;
   final bool compress;
@@ -11,20 +13,33 @@ class ImageProcessor {
   final int? compressQuality;
   final Function? started;
   final Function(String url)? ended;
-  ImageProcessor(
+  final IPtype fileType;
+  
+
+  FileProccessor(
       {this.retFromUrl = "",
       this.maxSizeAsMB = 1,
       this.compress = false,
       this.compressQuality,
       required this.photoName,
       this.started,
+      this.fileType = IPtype.image,
       this.ended});
 
   //desteklnen formatlarda dosyayı alıp döndürüyor
-  Future<File> getImage() async {
+  Future<File> getFile() async {
+    //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
-      type: FileType.image,
+      type: fileType == IPtype.any
+          ? FileType.any
+          : fileType == IPtype.audio
+              ? FileType.audio
+              : fileType == IPtype.image
+                  ? FileType.image
+                  : fileType == IPtype.media
+                      ? FileType.media
+                      : FileType.video,
     );
 
     if (result == null) throw NoPickedFile.error();
@@ -35,24 +50,28 @@ class ImageProcessor {
       throw LargeFileError.error();
     }
     return file;
-  }
+  }  
 
-  Future<String> downloadUrl(path) async {
+
+  Future<String> _downloadUrl(path) async {
     return await FirebaseStorage.instance
         .refFromURL(this.retFromUrl)
         .child(path)
         .getDownloadURL();
   }
 
-  static Future<File> compressFile(File file, int quality) async {
-    File compressedFile = await FlutterNativeImage.compressImage(
-      file.path,
-      quality: quality,
-    );
-    return compressedFile;
+    Future<File> _compressFile(File file, int quality) async {
+    if (IPtype.image == fileType) {
+      File compressedFile = await FlutterNativeImage.compressImage(
+        file.path,
+        quality: quality,
+      );
+      return compressedFile;
+    }
+    throw CantCompress();
   }
 
-  Future<String> uploadImagetoFirebase(File? file) async {
+  Future<String> uploadFiletoFirebase(File? file) async {
     if (this.retFromUrl.isEmpty) {
       throw MissingRefURL.error();
     }
@@ -62,14 +81,14 @@ class ImageProcessor {
     if (file != null) {
       File theFile = file;
       if (this.compress) {
-        theFile = await compressFile(file, this.compressQuality ?? 25);
+        theFile = await _compressFile(file, this.compressQuality ?? 25);
       }
       return await FirebaseStorage.instance
           .refFromURL(this.retFromUrl)
           .child(photoName)
           .putFile(theFile)
           .then((p0) async {
-        return await downloadUrl(photoName).then((url) {
+        return await _downloadUrl(photoName).then((url) {
           //url burda dönüyor
           if (ended != null) {
             ended!(url);
@@ -111,5 +130,12 @@ class NoPickedFile {
 //dosya seçilmemiş
   static error() {
     return {"code": 303, "message": "There is no picked file"};
+  }
+}
+
+class CantCompress {
+//dosya seçilmemiş
+  static error() {
+    return {"code": 333, "message": "This file type is not image!"};
   }
 }
