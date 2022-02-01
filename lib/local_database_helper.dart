@@ -84,6 +84,24 @@ class LocalDBService {
     });
   }
 
+  void multipleCreate({required List<CreateModel> tables}) async {
+    await _init().then((db) async {
+      var batch = _DATABASE!.batch();
+      tables.forEach((table) {
+        tableIsEmpty(table.tableName, _DATABASE, () async {
+          batch.execute(
+            """ 
+        CREATE TABLE ${table.tableName} 
+        (${table.parameters})
+        """,
+          );
+        });
+      });
+
+      await batch.commit();
+    });
+  }
+
   void insert(
       {required String tableName,
       required String parameters,
@@ -176,4 +194,10 @@ class LocalDBService {
       ifNotExist();
     }
   }
+}
+
+class CreateModel {
+  final String tableName;
+  final String parameters;
+  CreateModel({required this.parameters, required this.tableName});
 }
