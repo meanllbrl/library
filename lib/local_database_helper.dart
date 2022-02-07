@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:mean_lib/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -200,4 +202,89 @@ class CreateModel {
   final String tableName;
   final String parameters;
   CreateModel({required this.parameters, required this.tableName});
+}
+
+class FirebaseInfos {
+  final String collectionName;
+  final String compParam;
+
+  FirebaseInfos({required this.collectionName, required this.compParam});
+}
+
+class LocalInfos {
+  final String tableName;
+  final String compParam;
+
+  LocalInfos({required this.tableName, required this.compParam});
+}
+
+class FetchLocalFF {
+  FirebaseFirestore _db = FirebaseFirestore.instance;
+  LocalDBService _local = LocalDBService(name: "batch.db");
+  //this LocalInfos is the atr which will be used to compare local db and firebase
+  final LocalInfos localDatabase;
+  //this param is the atr which will be used to compare firebase and local
+  final FirebaseInfos fbDatabase;
+  final bool isItDate;
+  //the function will be triggered when process ok
+  final Function(QuerySnapshot<Map<String, dynamic>> value) onFinished;
+  FetchLocalFF(
+      {required this.isItDate,
+      required this.localDatabase,
+      required this.fbDatabase,
+      required this.onFinished});
+
+  //this class for fetching local database from firebase
+  Future<void> fetch() async {
+    //comparisio element to use it on firebase query
+    dynamic comparisionElement = isItDate ? Timestamp.now() : 0;
+    //look to local database if any doc exists
+    int localDocCount = await _getCount();
+    //if any doc exist get the latest or biggest doc
+    if (localDocCount != 0) {
+      comparisionElement = await _getBiggest();
+      if (isItDate) {
+        try {
+          comparisionElement =
+              Timestamp.fromMillisecondsSinceEpoch(comparisionElement + 1);
+        } catch (e) {
+          throw ErrorDescription(
+              "Are You Sure That Is A Date(Frommilliseconseachpo...)");
+        }
+      }
+    }
+
+    //firebase query
+    await _db
+        .collection(fbDatabase.collectionName)
+        .where(fbDatabase.compParam, isGreaterThan: comparisionElement)
+        .get()
+        .then((value) {
+      onFinished(value);
+    });
+  }
+
+  Future<dynamic> _getBiggest() async {
+    try {
+      List theData = await _local.read(
+          parameters: localDatabase.compParam,
+          tableName: localDatabase.tableName,
+          lastStatement: "ORDER BY ${localDatabase.compParam} DESC LIMIT 1");
+      return theData[0][0][localDatabase.compParam];
+    } catch (e) {
+      Logger.bigError(e.toString());
+      throw ErrorDescription("Local Database get biggest crashed!!!");
+    }
+  }
+
+  Future<int> _getCount() async {
+    try {
+      List theData = await _local.read(
+          parameters: "COUNT(*) AS total", tableName: localDatabase.tableName);
+      return theData[0][0]["total"];
+    } catch (e) {
+      Logger.bigError(e.toString());
+      throw ErrorDescription("Local Database get count crashed!!!");
+    }
+  }
 }
