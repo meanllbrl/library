@@ -235,9 +235,10 @@ class FetchLocalFF {
       required this.onFinished});
 
   //this class for fetching local database from firebase
+  //it returns to functionality of getting missing data on local database
   Future<void> fetch() async {
     //comparisio element to use it on firebase query
-    dynamic comparisionElement = isItDate ? Timestamp.now() : 0;
+    dynamic comparisionElement = isItDate ? DateTime(2000) : 0;
     //look to local database if any doc exists
     int localDocCount = await _getCount();
     //if any doc exist get the latest or biggest doc
