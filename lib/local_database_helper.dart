@@ -144,14 +144,24 @@ class LocalDBService {
       bool prints = false}) async {
     return await _init().then((db) async {
       var batch = _DATABASE!.batch();
-      batch.rawQuery(
+      if (where.isEmpty){
+        batch.rawQuery(
         """
         SELECT $parameters 
         FROM $tableName
-        WHERE ${where.isEmpty ? true : where}
         $lastStatement
         """,
-      );
+      );}else{
+  batch.rawQuery(
+        """
+        SELECT $parameters 
+        FROM $tableName
+        WHERE $where
+        $lastStatement
+        """,);
+      }
+      
+      
       List result = await batch.commit();
       if (prints) {
         result.forEach((element) {
