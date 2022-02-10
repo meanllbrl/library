@@ -144,24 +144,25 @@ class LocalDBService {
       bool prints = false}) async {
     return await _init().then((db) async {
       var batch = _DATABASE!.batch();
-      if (where.isEmpty){
+      if (where.isEmpty) {
         batch.rawQuery(
-        """
+          """
         SELECT $parameters 
         FROM $tableName
         $lastStatement
         """,
-      );}else{
-  batch.rawQuery(
-        """
+        );
+      } else {
+        batch.rawQuery(
+          """
         SELECT $parameters 
         FROM $tableName
         WHERE $where
         $lastStatement
-        """,);
+        """,
+        );
       }
-      
-      
+
       List result = await batch.commit();
       if (prints) {
         result.forEach((element) {
@@ -221,10 +222,25 @@ class FirebaseInfos {
   FirebaseInfos({required this.collectionName, required this.compParam});
 }
 
+class UpdateModel {
+  final String fbDocId;
+  final String localTableId;
+  final String localCompParam;
+  final String fbCompParam;
+  final Function(List docs) insertDataWithFBDocs;
+
+  UpdateModel(
+      {required this.insertDataWithFBDocs,
+      required this.fbDocId,
+      required this.localTableId,
+      this.localCompParam = "id",
+      this.fbCompParam = "id"});
+}
+
 class LocalInfos {
   final String tableName;
   final String compParam;
-
+  //if update model is not null and there is any updated doc, this function will be triggered
   LocalInfos({required this.tableName, required this.compParam});
 }
 
@@ -236,10 +252,15 @@ class FetchLocalFF {
   //this param is the atr which will be used to compare firebase and local
   final FirebaseInfos fbDatabase;
   final bool isItDate;
+  //this param is for enabling looking for updated values on db
+  final UpdateModel? updateModel;
   //the function will be triggered when process ok
-  final Function(QuerySnapshot<Map<String, dynamic>> value) onFinished;
+  final Future<void> Function(QuerySnapshot<Map<String, dynamic>> value)
+      onFinished;
+
   FetchLocalFF(
       {required this.isItDate,
+      this.updateModel,
       required this.localDatabase,
       required this.fbDatabase,
       required this.onFinished});
@@ -270,8 +291,47 @@ class FetchLocalFF {
         .collection(fbDatabase.collectionName)
         .where(fbDatabase.compParam, isGreaterThan: comparisionElement)
         .get()
-        .then((value) {
-      onFinished(value);
+        .then((value) async {
+      //returned the values which hosted database has and local hasn't
+      await onFinished(value);  /* .then((value) async {
+     Logger.warning("the databases have to have updateDate param");
+        try {
+          //if update model is not null
+          if (updateModel != null) {
+            //local datas
+            print("*****UPDATE CONTROL: BEGINS");
+            List theData = await _local.read(
+                parameters:
+                    "${updateModel!.localCompParam} AS comp,${updateModel!.localTableId} AS id",
+                tableName: localDatabase.tableName);
+            //for each local data
+            theData[0].forEach((element) async {
+              //we get date of updating of the data
+              DateTime localDate =
+                  DateTime.fromMillisecondsSinceEpoch(element["comp"]);
+              //We ask firebase if there is new data
+              await _db
+                  .collection(fbDatabase.collectionName)
+                  .where(updateModel!.fbCompParam, isGreaterThan: localDate)
+                  .get()
+                  .then((updatedDocs) {
+                print(
+                    "*****UPDATE CONTROL: UPDATED DOCUMENTS HAS RETURNED (${updatedDocs.docs.length})");
+                //the updated docs is here
+                updatedDocs.docs.forEach((updatedDoc) {
+                  print("*****UPDATE CONTROL: DELETING FROM LOCAL");
+                  _local.delete(
+                      tableName: localDatabase.tableName,
+                      whereStatement:
+                          "WHERE '${element["id"]}'='${updatedDoc[updateModel!.fbDocId]}'");
+                });
+                print("*****UPDATE CONTROL: REINSERTING TO LOCAL");
+                updateModel!.insertDataWithFBDocs(updatedDocs.docs);
+              });
+            });
+          }
+        } catch (e) {}
+      });*/
     });
   }
 
@@ -284,7 +344,7 @@ class FetchLocalFF {
       return theData[0][0][localDatabase.compParam];
     } catch (e) {
       Logger.bigError(e.toString());
-      throw ErrorDescription("Local Database get biggest crashed!!!");
+      throw ErrorDescription("Local Database _getBiggest crashed!!!");
     }
   }
 
