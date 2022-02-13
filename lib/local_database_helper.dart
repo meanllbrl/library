@@ -318,7 +318,7 @@ class FetchLocalFF {
           //getting dcs which has firebase comparision params
           await _db
               .collection(fbDatabase.collectionName)
-              .orderBy(updateModel!.fbCompParam)
+              .where(updateModel!.fbCompParam)
               .get()
               .then((docsWithUpdateComp) {
             print(
