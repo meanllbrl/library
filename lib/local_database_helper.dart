@@ -303,7 +303,7 @@ class FetchLocalFF {
         .get()
         .then((newDocs) async {
       //returned the values which hosted database has and local hasn't
-      if (updateModel != null) {
+      if (updateModel == null) {
         await onFinished(newDocs);
       } //if update model is not null
       else {
