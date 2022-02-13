@@ -329,6 +329,7 @@ class FetchLocalFF {
                 docsWithUpdateComp.docs.forEach((fb) {
                   dynamic singleDoc = theData[0].firstWhere(
                       (element) => element["id"] == fb[updateModel!.fbDocId]);
+                  print("singledoc: "+singleDoc);
                   if (singleDoc != null) {
                     if (singleDoc["comp"] + 1 <
                         fb[updateModel!.fbCompParam]
@@ -345,7 +346,7 @@ class FetchLocalFF {
                   }
                 });
               } catch (e) {
-                Logger.error("update control error");
+                Logger.error("update control error", e.toString());
               }
             }).then((value) async {
               await onFinished(newDocs);

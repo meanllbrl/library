@@ -18,7 +18,7 @@ class Logger {
     _logger.i(message);
   }
 
-  static void error(String message) {
+  static void error(String message, String string) {
     _logger.e(message,);
   }
 
