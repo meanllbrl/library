@@ -319,7 +319,7 @@ class FetchLocalFF {
           if (theData.isNotEmpty) {
             await _db
                 .collection(fbDatabase.collectionName)
-                .where(updateModel!.fbCompParam,arrayContains: true)
+                .where(updateModel!.fbCompParam,isNull: false)
                 .get()
                 .then((docsWithUpdateComp) {
               print(
