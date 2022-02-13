@@ -316,35 +316,39 @@ class FetchLocalFF {
                   "${updateModel!.localCompParam} AS comp,${updateModel!.localTableId} AS id",
               tableName: localDatabase.tableName);
           //getting dcs which has firebase comparision params
-          await _db
-              .collection(fbDatabase.collectionName)
-              .where(updateModel!.fbCompParam)
-              .get()
-              .then((docsWithUpdateComp) {
-            print(
-                "*****UPDATE CONTROL: THE DOCS WHICH HAS UP. PARAM (${docsWithUpdateComp.docs.length})");
-            //for each docs with has update compairision fields
-            docsWithUpdateComp.docs.forEach((fb) {
-              dynamic singleDoc = theData[0].firstWhere(
-                  (element) => element["id"] == fb[updateModel!.fbDocId]);
-              if (singleDoc != null) {
-                if (singleDoc["comp"]+1 <
-                    fb[updateModel!.fbCompParam]
-                        .toDate()
-                        .millisecondsSinceEpoch) {
-                  print("*****UPDATE CONTROL: DELETING FROM LOCAL");
-                  _local.delete(
-                      tableName: localDatabase.tableName,
-                      whereStatement:
-                          "WHERE '${singleDoc["id"]}'='${fb[updateModel!.fbDocId]}'");
-                  print("*****UPDATE CONTROL: ADDING TO LOCAL");
-                  updateModel!.insertDataWithFBDocs([singleDoc]);
+          if (theData.isNotEmpty) {
+            await _db
+                .collection(fbDatabase.collectionName)
+                .where(updateModel!.fbCompParam)
+                .get()
+                .then((docsWithUpdateComp) {
+              print(
+                  "*****UPDATE CONTROL: THE DOCS WHICH HAS UP. PARAM (${docsWithUpdateComp.docs.length})");
+              //for each docs with has update compairision fields
+              docsWithUpdateComp.docs.forEach((fb) {
+                dynamic singleDoc = theData[0].firstWhere(
+                    (element) => element["id"] == fb[updateModel!.fbDocId]);
+                if (singleDoc != null) {
+                  if (singleDoc["comp"] + 1 <
+                      fb[updateModel!.fbCompParam]
+                          .toDate()
+                          .millisecondsSinceEpoch) {
+                    print("*****UPDATE CONTROL: DELETING FROM LOCAL");
+                    _local.delete(
+                        tableName: localDatabase.tableName,
+                        whereStatement:
+                            "WHERE '${singleDoc["id"]}'='${fb[updateModel!.fbDocId]}'");
+                    print("*****UPDATE CONTROL: ADDING TO LOCAL");
+                    updateModel!.insertDataWithFBDocs([singleDoc]);
+                  }
                 }
-              }
+              });
+            }).then((value) async {
+              await onFinished(newDocs);
             });
-          }).then((value) async {
+          } else {
             await onFinished(newDocs);
-          });
+          }
         } catch (e) {
           print("*****UPDATE CONTROL: ERROR${e.toString()}");
         }
