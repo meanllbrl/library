@@ -210,23 +210,31 @@ class LocalDBService {
 }
 
 class CreateModel {
+  //the table name which will be created
   final String tableName;
+  //the parameters
   final String parameters;
   CreateModel({required this.parameters, required this.tableName});
 }
 
 class FirebaseInfos {
+  //firebase collection name
   final String collectionName;
+  //firebase comparision parameters
   final String compParam;
-
   FirebaseInfos({required this.collectionName, required this.compParam});
 }
 
 class UpdateModel {
+  //firebase doc identifier
   final String fbDocId;
+  //sql table identifier
   final String localTableId;
+  //local update comparision parameter
   final String localCompParam;
+  //firebase update comparision parameter
   final String fbCompParam;
+  //the function which gets the firebase docs and insert into the table
   final Function(List docs) insertDataWithFBDocs;
 
   UpdateModel(
@@ -238,7 +246,9 @@ class UpdateModel {
 }
 
 class LocalInfos {
+  //sql table name
   final String tableName;
+  //sql table comparision parameter
   final String compParam;
   //if update model is not null and there is any updated doc, this function will be triggered
   LocalInfos({required this.tableName, required this.compParam});
@@ -291,47 +301,54 @@ class FetchLocalFF {
         .collection(fbDatabase.collectionName)
         .where(fbDatabase.compParam, isGreaterThan: comparisionElement)
         .get()
-        .then((value) async {
+        .then((newDocs) async {
       //returned the values which hosted database has and local hasn't
-      await onFinished(value);  /* .then((value) async {
-     Logger.warning("the databases have to have updateDate param");
+      if (updateModel != null) {
+        await onFinished(newDocs);
+      } //if update model is not null
+      else {
+        Logger.warning("the databases have to have updateDate param");
         try {
-          //if update model is not null
-          if (updateModel != null) {
-            //local datas
-            print("*****UPDATE CONTROL: BEGINS");
-            List theData = await _local.read(
-                parameters:
-                    "${updateModel!.localCompParam} AS comp,${updateModel!.localTableId} AS id",
-                tableName: localDatabase.tableName);
-            //for each local data
-            theData[0].forEach((element) async {
-              //we get date of updating of the data
-              DateTime localDate =
-                  DateTime.fromMillisecondsSinceEpoch(element["comp"]);
-              //We ask firebase if there is new data
-              await _db
-                  .collection(fbDatabase.collectionName)
-                  .where(updateModel!.fbCompParam, isGreaterThan: localDate)
-                  .get()
-                  .then((updatedDocs) {
-                print(
-                    "*****UPDATE CONTROL: UPDATED DOCUMENTS HAS RETURNED (${updatedDocs.docs.length})");
-                //the updated docs is here
-                updatedDocs.docs.forEach((updatedDoc) {
+          print("*****UPDATE CONTROL: BEGINS");
+          //getting table data
+          List theData = await _local.read(
+              parameters:
+                  "${updateModel!.localCompParam} AS comp,${updateModel!.localTableId} AS id",
+              tableName: localDatabase.tableName);
+          //getting dcs which has firebase comparision params
+          await _db
+              .collection(fbDatabase.collectionName)
+              .orderBy(updateModel!.fbCompParam)
+              .get()
+              .then((docsWithUpdateComp) {
+            print(
+                "*****UPDATE CONTROL: THE DOCS WHICH HAS UP. PARAM (${docsWithUpdateComp.docs.length})");
+            //for each docs with has update compairision fields
+            docsWithUpdateComp.docs.forEach((fb) {
+              dynamic singleDoc = theData[0].firstWhere(
+                  (element) => element["id"] == fb[updateModel!.fbDocId]);
+              if (singleDoc != null) {
+                if (singleDoc["comp"]+1 <
+                    fb[updateModel!.fbCompParam]
+                        .toDate()
+                        .millisecondsSinceEpoch) {
                   print("*****UPDATE CONTROL: DELETING FROM LOCAL");
                   _local.delete(
                       tableName: localDatabase.tableName,
                       whereStatement:
-                          "WHERE '${element["id"]}'='${updatedDoc[updateModel!.fbDocId]}'");
-                });
-                print("*****UPDATE CONTROL: REINSERTING TO LOCAL");
-                updateModel!.insertDataWithFBDocs(updatedDocs.docs);
-              });
+                          "WHERE '${singleDoc["id"]}'='${fb[updateModel!.fbDocId]}'");
+                  print("*****UPDATE CONTROL: ADDING TO LOCAL");
+                  updateModel!.insertDataWithFBDocs([singleDoc]);
+                }
+              }
             });
-          }
-        } catch (e) {}
-      });*/
+          }).then((value) async {
+            await onFinished(newDocs);
+          });
+        } catch (e) {
+          print("*****UPDATE CONTROL: ERROR${e.toString()}");
+        }
+      }
     });
   }
 
