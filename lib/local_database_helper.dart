@@ -324,25 +324,29 @@ class FetchLocalFF {
                 .then((docsWithUpdateComp) {
               print(
                   "*****UPDATE CONTROL: THE DOCS WHICH HAS UP. PARAM (${docsWithUpdateComp.docs.length})");
-              //for each docs with has update compairision fields
-              docsWithUpdateComp.docs.forEach((fb) {
-                dynamic singleDoc = theData[0].firstWhere(
-                    (element) => element["id"] == fb[updateModel!.fbDocId]);
-                if (singleDoc != null) {
-                  if (singleDoc["comp"] + 1 <
-                      fb[updateModel!.fbCompParam]
-                          .toDate()
-                          .millisecondsSinceEpoch) {
-                    print("*****UPDATE CONTROL: DELETING FROM LOCAL");
-                    _local.delete(
-                        tableName: localDatabase.tableName,
-                        whereStatement:
-                            "WHERE '${singleDoc["id"]}'='${fb[updateModel!.fbDocId]}'");
-                    print("*****UPDATE CONTROL: ADDING TO LOCAL");
-                    updateModel!.insertDataWithFBDocs([singleDoc]);
+              try {
+                //for each docs with has update compairision fields
+                docsWithUpdateComp.docs.forEach((fb) {
+                  dynamic singleDoc = theData[0].firstWhere(
+                      (element) => element["id"] == fb[updateModel!.fbDocId]);
+                  if (singleDoc != null) {
+                    if (singleDoc["comp"] + 1 <
+                        fb[updateModel!.fbCompParam]
+                            .toDate()
+                            .millisecondsSinceEpoch) {
+                      print("*****UPDATE CONTROL: DELETING FROM LOCAL");
+                      _local.delete(
+                          tableName: localDatabase.tableName,
+                          whereStatement:
+                              "WHERE '${singleDoc["id"]}'='${fb[updateModel!.fbDocId]}'");
+                      print("*****UPDATE CONTROL: ADDING TO LOCAL");
+                      updateModel!.insertDataWithFBDocs([singleDoc]);
+                    }
                   }
-                }
-              });
+                });
+              } catch (e) {
+                Logger.error("update control error");
+              }
             }).then((value) async {
               await onFinished(newDocs);
             });
