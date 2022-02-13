@@ -265,7 +265,8 @@ class FetchLocalFF {
   //this param is for enabling looking for updated values on db
   final UpdateModel? updateModel;
   //the function will be triggered when process ok
-  final Future<void> Function(QuerySnapshot<Map<String, dynamic>> value)
+  final Future<void> Function(
+          QuerySnapshot<Map<String, dynamic>> value, List<String> skips)
       onFinished;
 
   FetchLocalFF(
@@ -304,9 +305,10 @@ class FetchLocalFF {
         .then((newDocs) async {
       //returned the values which hosted database has and local hasn't
       if (updateModel == null) {
-        await onFinished(newDocs);
+        await onFinished(newDocs, []);
       } //if update model is not null
       else {
+        List<String> skipWhileInserting = [];
         Logger.warning("the databases have to have updateDate param");
         try {
           print("*****UPDATE CONTROL: BEGINS");
@@ -327,10 +329,16 @@ class FetchLocalFF {
               try {
                 //for each docs with has update compairision fields
                 docsWithUpdateComp.docs.forEach((fb) {
-                  dynamic singleDoc = theData[0].firstWhere(
-                      (element) => element["id"] == fb[updateModel!.fbDocId]);
-                  print("singledoc: "+singleDoc);
+                  Map<String, dynamic>? singleDoc = theData[0]
+                      .where((element) => element["id"] == fb.id)
+                      .first;
+                  print("singledoc: " + singleDoc.toString());
                   if (singleDoc != null) {
+                    skipWhileInserting.add(singleDoc["id"]);
+                    print(singleDoc["comp"]);
+                    print(fb[updateModel!.fbCompParam]
+                        .toDate()
+                        .millisecondsSinceEpoch);
                     if (singleDoc["comp"] + 1 <
                         fb[updateModel!.fbCompParam]
                             .toDate()
@@ -338,21 +346,20 @@ class FetchLocalFF {
                       print("*****UPDATE CONTROL: DELETING FROM LOCAL");
                       _local.delete(
                           tableName: localDatabase.tableName,
-                          whereStatement:
-                              "WHERE '${singleDoc["id"]}'='${fb[updateModel!.fbDocId]}'");
+                          whereStatement: "WHERE 'id'='${fb.id}'");
                       print("*****UPDATE CONTROL: ADDING TO LOCAL");
-                      updateModel!.insertDataWithFBDocs([singleDoc]);
+                      updateModel!.insertDataWithFBDocs([fb]);
                     }
                   }
                 });
               } catch (e) {
-                Logger.error("update control error", e.toString());
+                print("update control error ${e.toString()}");
               }
             }).then((value) async {
-              await onFinished(newDocs);
+              await onFinished(newDocs,skipWhileInserting);
             });
           } else {
-            await onFinished(newDocs);
+            await onFinished(newDocs, []);
           }
         } catch (e) {
           print("*****UPDATE CONTROL: ERROR${e.toString()}");
