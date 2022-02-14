@@ -227,7 +227,7 @@ class FirebaseInfos {
 
 class UpdateModel {
   //firebase doc identifier
-  final String fbDocId;
+  final String? fbDocId;
   //sql table identifier
   final String localTableId;
   //local update comparision parameter
@@ -236,10 +236,12 @@ class UpdateModel {
   final String fbCompParam;
   //the function which gets the firebase docs and insert into the table
   final Function(List docs) insertDataWithFBDocs;
-
+  //the firebase query can be given
+  final Future<QuerySnapshot<Map<String, dynamic>>>? fbQuery;
   UpdateModel(
       {required this.insertDataWithFBDocs,
-      required this.fbDocId,
+      this.fbDocId,
+      this.fbQuery,
       required this.localTableId,
       this.localCompParam = "id",
       this.fbCompParam = "id"});
@@ -266,12 +268,14 @@ class FetchLocalFF {
   final UpdateModel? updateModel;
   //the function will be triggered when process ok
   final Future<void> Function(
-          QuerySnapshot<Map<String, dynamic>> value, List<String> skips)
-      onFinished;
+      QuerySnapshot<Map<String, dynamic>> value, List<String> skips) onFinished;
+  //the firebase query can be given
+  final Future<QuerySnapshot<Map<String, dynamic>>>? fbQuery;
 
   FetchLocalFF(
       {required this.isItDate,
       this.updateModel,
+      this.fbQuery,
       required this.localDatabase,
       required this.fbDatabase,
       required this.onFinished});
@@ -296,19 +300,18 @@ class FetchLocalFF {
         }
       }
     }
-
+    List<String> skipWhileInserting = [];
     //firebase query
-    await _db
+    await(fbQuery ?? _db
         .collection(fbDatabase.collectionName)
         .where(fbDatabase.compParam, isGreaterThan: comparisionElement)
-        .get()
+        .get())
         .then((newDocs) async {
       //returned the values which hosted database has and local hasn't
       if (updateModel == null) {
-        await onFinished(newDocs, []);
+        await onFinished(newDocs, skipWhileInserting);
       } //if update model is not null
       else {
-        List<String> skipWhileInserting = [];
         Logger.warning("the databases have to have updateDate param");
         try {
           print("*****UPDATE CONTROL: BEGINS");
@@ -319,18 +322,19 @@ class FetchLocalFF {
               tableName: localDatabase.tableName);
           //getting dcs which has firebase comparision params
           if (theData.isNotEmpty) {
-            await _db
+            await (updateModel!.fbQuery ??  _db
                 .collection(fbDatabase.collectionName)
                 .orderBy(updateModel!.fbCompParam)
-                .get()
+                .get())
                 .then((docsWithUpdateComp) {
               print(
                   "*****UPDATE CONTROL: THE DOCS WHICH HAS UP. PARAM (${docsWithUpdateComp.docs.length})");
               try {
                 //for each docs with has update compairision fields
-                docsWithUpdateComp.docs.forEach((fb) {
+                docsWithUpdateComp.docs.forEach((fb) async {
                   Map<String, dynamic>? singleDoc = theData[0]
-                      .where((element) => element["id"] == fb.id)
+                      .where((element) =>
+                          element["id"] == (updateModel!.fbDocId ?? fb.id))
                       .first;
                   print("singledoc: " + singleDoc.toString());
                   if (singleDoc != null) {
@@ -346,7 +350,8 @@ class FetchLocalFF {
                       print("*****UPDATE CONTROL: DELETING FROM LOCAL");
                       _local.delete(
                           tableName: localDatabase.tableName,
-                          whereStatement: "WHERE 'id'='${fb.id}'");
+                          whereStatement:
+                              "WHERE ${updateModel!.localTableId} ='${singleDoc["id"]}'");
                       print("*****UPDATE CONTROL: ADDING TO LOCAL");
                       updateModel!.insertDataWithFBDocs([fb]);
                     }
@@ -356,10 +361,10 @@ class FetchLocalFF {
                 print("update control error ${e.toString()}");
               }
             }).then((value) async {
-              await onFinished(newDocs,skipWhileInserting);
+              await onFinished(newDocs, skipWhileInserting);
             });
           } else {
-            await onFinished(newDocs, []);
+            await onFinished(newDocs, skipWhileInserting);
           }
         } catch (e) {
           print("*****UPDATE CONTROL: ERROR${e.toString()}");
