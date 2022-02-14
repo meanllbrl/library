@@ -270,7 +270,7 @@ class FetchLocalFF {
   final Future<void> Function(
       QuerySnapshot<Map<String, dynamic>> value, List<String> skips) onFinished;
   //the firebase query can be given
-  final Future<QuerySnapshot<Map<String, dynamic>>>? fbQuery;
+  final Future<QuerySnapshot<Map<String, dynamic>>> Function(dynamic compElement)? fbQuery;
 
   FetchLocalFF(
       {required this.isItDate,
@@ -302,7 +302,7 @@ class FetchLocalFF {
     }
     List<String> skipWhileInserting = [];
     //firebase query
-    await(fbQuery ?? _db
+    await(fbQuery!=null ? fbQuery!(comparisionElement) : _db
         .collection(fbDatabase.collectionName)
         .where(fbDatabase.compParam, isGreaterThan: comparisionElement)
         .get())
