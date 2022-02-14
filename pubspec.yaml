@@ -16,8 +16,6 @@ dependencies:
   rflutter_alert: ^2.0.2
   persistent_bottom_nav_bar:
   logger: ^1.1.0
-  sqflite: ^2.0.1
-  path_provider: 
   flutter_native_image: ^0.0.6+1
   firebase_storage: ^10.2.5
   file_picker: ^4.3.1
