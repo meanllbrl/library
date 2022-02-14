@@ -334,7 +334,7 @@ class FetchLocalFF {
                 docsWithUpdateComp.docs.forEach((fb) async {
                   Map<String, dynamic>? singleDoc = theData[0]
                       .where((element) =>
-                          element["id"] == (updateModel!.fbDocId ?? fb.id))
+                          element["id"] == (updateModel!.fbDocId != null ? fb[updateModel!.fbDocId!] : fb.id))
                       .first;
                   print("singledoc: " + singleDoc.toString());
                   if (singleDoc != null) {
