@@ -20,6 +20,8 @@ dependencies:
   firebase_storage: ^10.2.5
   file_picker: ^4.3.1
   cloud_firestore:
+  path_provider:
+  sqflite:
 
 
 
