@@ -173,7 +173,8 @@ class LocalDBService {
   //LOOKS IF TABLE HAS ANY DATA
   void _tableIsEmpty(String tableName, db, Function ifNotExist) async {
     try {
-      await read(parameters: "*", tableName: tableName);
+      int? count = Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM $tableName'));
     } catch (e) {
       ifNotExist();
     }
