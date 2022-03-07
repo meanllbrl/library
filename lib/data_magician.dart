@@ -18,7 +18,7 @@ class DataMagicianFuture extends StatelessWidget {
   final Widget? loadingWidget;
   final Function? onError;
   final Widget? errorWidget;
-  final Widget ui;
+  final Widget(AsyncSnapshot<Object?> data) Function ui;
   final Future future;
   final TextStyle defaultTextStyle;
   @override
@@ -44,7 +44,7 @@ class DataMagicianFuture extends StatelessWidget {
         if (data.hasData) {
           debugPrint("Data is exist!");
         }
-        return ui;
+        return ui(data);
       },
     );
   }
