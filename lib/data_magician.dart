@@ -4,7 +4,7 @@ import 'package:mean_lib/statefull_wrapper.dart';
 //future ile data çekme
 class DataMagicianFuture extends StatelessWidget {
   //properties: success trigger / dataLoadMethod / onError / onSuccess / onLoading
-  const DataMagicianFuture(
+   DataMagicianFuture(
       {Key? key,
       this.onLoading,
       this.loadingWidget,
@@ -18,7 +18,7 @@ class DataMagicianFuture extends StatelessWidget {
   final Widget? loadingWidget;
   final Function? onError;
   final Widget? errorWidget;
-  final Widget(AsyncSnapshot<Object?> data) Function ui;
+  final Widget Function(AsyncSnapshot<Object?> data)  ui;
   final Future future;
   final TextStyle defaultTextStyle;
   @override
