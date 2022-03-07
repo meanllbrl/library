@@ -18,8 +18,8 @@ class Logger {
     _logger.i(message);
   }
 
-  static void error(String message, String string) {
-    _logger.e(message,);
+  static void error(String message) {
+    _logger.e(message);
   }
 
   static void warning(String message) {
