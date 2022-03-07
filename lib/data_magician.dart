@@ -18,7 +18,7 @@ class DataMagicianFuture extends StatelessWidget {
   final Widget? loadingWidget;
   final Function? onError;
   final Widget? errorWidget;
-  final Widget Function(AsyncSnapshot<Object?> data)  ui;
+  final Widget Function(dynamic data)  ui;
   final Future future;
   final TextStyle defaultTextStyle;
   @override
