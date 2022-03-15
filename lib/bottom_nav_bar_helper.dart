@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
+import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
 
 class BottomBarHelper extends StatelessWidget {
-  const BottomBarHelper({
-    Key? key,
-    this.willPop = false,
-    required this.screens,
-    this.tabController,
-    this.items,
-    this.useSafeArea = true,
-    required this.backgroundColor,
-    this.hideNavBarWhenKeyboardShows = true,
-    this.navbarPadding,
-    this.shadowColor = Colors.black38,
-    required this.colorBehindNavbar,
-    this.navBarHeight = 53,
-    this.itemAnimationDuration = const Duration(milliseconds: 350),
-    this.itemAnimationCurve = Curves.easeIn,
-    this.screenAnimationDuration = const Duration(milliseconds: 350),
-    this.screenAnimationCurve = Curves.easeIn,
-    required this.navBarStyle,
-  }) : super(key: key);
+  const BottomBarHelper(
+      {Key? key,
+      this.willPop = false,
+      required this.screens,
+      this.tabController,
+      this.items,
+      this.useSafeArea = true,
+      required this.backgroundColor,
+      this.hideNavBarWhenKeyboardShows = true,
+      this.navbarPadding,
+      this.shadowColor = Colors.black38,
+      required this.colorBehindNavbar,
+      this.navBarHeight = 53,
+      this.itemAnimationDuration = const Duration(milliseconds: 350),
+      this.itemAnimationCurve = Curves.easeIn,
+      this.screenAnimationDuration = const Duration(milliseconds: 350),
+      this.screenAnimationCurve = Curves.easeIn,
+      required this.navBarStyle,
+      this.onItemSelected})
+      : super(key: key);
   final bool willPop;
   final List<Widget> screens;
   final PersistentTabController? tabController;
@@ -37,6 +38,7 @@ class BottomBarHelper extends StatelessWidget {
   final Duration screenAnimationDuration;
   final Curve screenAnimationCurve;
   final NavBarStyle navBarStyle;
+  final Function(int)? onItemSelected;
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -46,6 +48,7 @@ class BottomBarHelper extends StatelessWidget {
           screens: screens,
           controller: tabController,
           items: items,
+          onItemSelected: onItemSelected ?? null,
           confineInSafeArea: useSafeArea,
           backgroundColor: backgroundColor,
           hideNavigationBarWhenKeyboardShows: hideNavBarWhenKeyboardShows,
