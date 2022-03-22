@@ -14,7 +14,6 @@ class FileProccessor {
   final Function? started;
   final Function(String url)? ended;
   final IPtype fileType;
-  
 
   FileProccessor(
       {this.retFromUrl = "",
@@ -27,7 +26,7 @@ class FileProccessor {
       this.ended});
 
   //desteklnen formatlarda dosyayı alıp döndürüyor
-  Future<File> getFile() async {
+  static Future<File> getFile({IPtype fileType=IPtype.image,int maxSizeAsMB = 5}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -50,8 +49,7 @@ class FileProccessor {
       throw LargeFileError.error();
     }
     return file;
-  }  
-
+  }
 
   Future<String> _downloadUrl(path) async {
     return await FirebaseStorage.instance
@@ -60,7 +58,7 @@ class FileProccessor {
         .getDownloadURL();
   }
 
-    Future<File> _compressFile(File file, int quality) async {
+  Future<File> _compressFile(File file, int quality) async {
     if (IPtype.image == fileType) {
       File compressedFile = await FlutterNativeImage.compressImage(
         file.path,
