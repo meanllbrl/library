@@ -14,7 +14,7 @@ class FileProccessor {
   final Function? started;
   final Function(String url)? ended;
   final IPtype fileType;
-
+  final Function(int errorCode)? onError;
   FileProccessor(
       {this.retFromUrl = "",
       this.maxSizeAsMB = 1,
@@ -23,10 +23,14 @@ class FileProccessor {
       required this.photoName,
       this.started,
       this.fileType = IPtype.image,
+      this.onError,
       this.ended});
 
   //desteklnen formatlarda dosyayı alıp döndürüyor
-  static Future<File> getFile({IPtype fileType=IPtype.image,int maxSizeAsMB = 5}) async {
+  static Future<File> getFile(
+      {IPtype fileType = IPtype.image,
+      int maxSizeAsMB = 5,
+      Function(int errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -40,12 +44,14 @@ class FileProccessor {
                       ? FileType.media
                       : FileType.video,
     );
-
+    if (onError != null) onError(303);
     if (result == null) throw NoPickedFile.error();
     final path = result.files.single.path;
     File file = File(path!);
     double fileSizeMB = file.lengthSync() / (1024 * 1024);
     if (fileSizeMB > maxSizeAsMB) {
+      if (onError != null) onError(301);
+
       throw LargeFileError.error();
     }
     return file;
@@ -66,6 +72,8 @@ class FileProccessor {
       );
       return compressedFile;
     }
+    if (onError != null) onError!(333);
+
     throw CantCompress();
   }
 
@@ -101,6 +109,8 @@ class FileProccessor {
 
   Future<void> cancel() async {
     if (this.retFromUrl == null) {
+      if (onError != null) onError!(302);
+
       throw MissingRefURL.error();
     }
     await FirebaseStorage.instance
