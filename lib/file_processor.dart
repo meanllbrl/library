@@ -4,7 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 
 enum IPtype { image, audio, video, media, any }
-
+enum Errors {largeFile , missingRef , noPickedFile , cantCompress}
 class FileProccessor {
   final String retFromUrl;
   final double maxSizeAsMB;
@@ -14,7 +14,7 @@ class FileProccessor {
   final Function? started;
   final Function(String url)? ended;
   final IPtype fileType;
-  final Function(int errorCode)? onError;
+  final Function(Errors errorCode)? onError;
   FileProccessor(
       {this.retFromUrl = "",
       this.maxSizeAsMB = 1,
@@ -30,7 +30,7 @@ class FileProccessor {
   static Future<File> getFile(
       {IPtype fileType = IPtype.image,
       int maxSizeAsMB = 5,
-      Function(int errorCode)? onError}) async {
+      Function(Errors errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -44,13 +44,13 @@ class FileProccessor {
                       ? FileType.media
                       : FileType.video,
     );
-    if (onError != null) onError(303);
+    if (onError != null) onError(Errors.noPickedFile);
     if (result == null) throw NoPickedFile.error();
     final path = result.files.single.path;
     File file = File(path!);
     double fileSizeMB = file.lengthSync() / (1024 * 1024);
     if (fileSizeMB > maxSizeAsMB) {
-      if (onError != null) onError(301);
+      if (onError != null) onError(Errors.largeFile);
 
       throw LargeFileError.error();
     }
@@ -72,7 +72,7 @@ class FileProccessor {
       );
       return compressedFile;
     }
-    if (onError != null) onError!(333);
+    if (onError != null) onError!(Errors.cantCompress);
 
     throw CantCompress();
   }
@@ -109,7 +109,7 @@ class FileProccessor {
 
   Future<void> cancel() async {
     if (this.retFromUrl == null) {
-      if (onError != null) onError!(302);
+      if (onError != null) onError!(Errors.missingRef);
 
       throw MissingRefURL.error();
     }
