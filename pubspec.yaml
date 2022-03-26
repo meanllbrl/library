@@ -21,7 +21,7 @@ dependencies:
   file_picker: ^4.3.1
   cloud_firestore:
   path_provider:
-  sqflite: ^2.2.0
+  sqflite: ^2.0.1
 
 
 
