@@ -4,7 +4,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 
 enum IPtype { image, audio, video, media, any }
-enum Errors {largeFile , missingRef , noPickedFile , cantCompress}
+enum Errors { largeFile, missingRef, noPickedFile, cantCompress }
+
 class FileProccessor {
   final String retFromUrl;
   final double maxSizeAsMB;
@@ -44,8 +45,11 @@ class FileProccessor {
                       ? FileType.media
                       : FileType.video,
     );
-    if (onError != null) onError(Errors.noPickedFile);
-    if (result == null) throw NoPickedFile.error();
+    if (result == null) {
+      if (onError != null) onError(Errors.noPickedFile);
+
+      throw NoPickedFile.error();
+    }
     final path = result.files.single.path;
     File file = File(path!);
     double fileSizeMB = file.lengthSync() / (1024 * 1024);
