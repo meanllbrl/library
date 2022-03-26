@@ -39,14 +39,20 @@ class LocalDBService {
   void create({required String tableName, required String parameters}) async {
     await _init().then((db) async {
       var batch = _DATABASE!.batch();
-      _tableIsEmpty(tableName, _DATABASE, () async {
+       batch.execute(
+          """ 
+        CREATE TABLE $tableName 
+        ($parameters)
+        """,
+        );
+     /* _tableIsEmpty(tableName, _DATABASE, () async {
         batch.execute(
           """ 
         CREATE TABLE $tableName 
         ($parameters)
         """,
         );
-      });
+      });*/
 
       await batch.commit();
     });
