@@ -63,14 +63,20 @@ class LocalDBService {
     await _init().then((db) async {
       var batch = _DATABASE!.batch();
       tables.forEach((table) {
-        _tableIsEmpty(table.tableName, _DATABASE, () async {
+        batch.execute(
+            """ 
+        CREATE TABLE ${table.tableName} 
+        (${table.parameters})
+        """,
+          );
+      /*  _tableIsEmpty(table.tableName, _DATABASE, () async {
           batch.execute(
             """ 
         CREATE TABLE ${table.tableName} 
         (${table.parameters})
         """,
           );
-        });
+        });*/
       });
 
       await batch.commit();
