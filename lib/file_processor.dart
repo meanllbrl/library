@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 
 enum IPtype { image, audio, video, media, any }
+enum Errors { largeFile, missingRef, noPickedFile, cantCompress }
 
 class FileProccessor {
   final String retFromUrl;
@@ -14,8 +15,7 @@ class FileProccessor {
   final Function? started;
   final Function(String url)? ended;
   final IPtype fileType;
-  
-
+  final Function(Errors errorCode)? onError;
   FileProccessor(
       {this.retFromUrl = "",
       this.maxSizeAsMB = 1,
@@ -24,10 +24,14 @@ class FileProccessor {
       required this.photoName,
       this.started,
       this.fileType = IPtype.image,
+      this.onError,
       this.ended});
 
   //desteklnen formatlarda dosyayı alıp döndürüyor
-  Future<File> getFile() async {
+  static Future<File> getFile(
+      {IPtype fileType = IPtype.image,
+      int maxSizeAsMB = 5,
+      Function(Errors errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -41,17 +45,21 @@ class FileProccessor {
                       ? FileType.media
                       : FileType.video,
     );
+    if (result == null) {
+      if (onError != null) onError(Errors.noPickedFile);
 
-    if (result == null) throw NoPickedFile.error();
+      throw NoPickedFile.error();
+    }
     final path = result.files.single.path;
     File file = File(path!);
     double fileSizeMB = file.lengthSync() / (1024 * 1024);
     if (fileSizeMB > maxSizeAsMB) {
+      if (onError != null) onError(Errors.largeFile);
+
       throw LargeFileError.error();
     }
     return file;
-  }  
-
+  }
 
   Future<String> _downloadUrl(path) async {
     return await FirebaseStorage.instance
@@ -60,7 +68,7 @@ class FileProccessor {
         .getDownloadURL();
   }
 
-    Future<File> _compressFile(File file, int quality) async {
+  Future<File> _compressFile(File file, int quality) async {
     if (IPtype.image == fileType) {
       File compressedFile = await FlutterNativeImage.compressImage(
         file.path,
@@ -68,6 +76,8 @@ class FileProccessor {
       );
       return compressedFile;
     }
+    if (onError != null) onError!(Errors.cantCompress);
+
     throw CantCompress();
   }
 
@@ -103,6 +113,8 @@ class FileProccessor {
 
   Future<void> cancel() async {
     if (this.retFromUrl == null) {
+      if (onError != null) onError!(Errors.missingRef);
+
       throw MissingRefURL.error();
     }
     await FirebaseStorage.instance
