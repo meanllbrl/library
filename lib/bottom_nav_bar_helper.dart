@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
 
-class BottomBarHelper extends StatelessWidget {
+class BottomBarHelper extends StatefulWidget {
   const BottomBarHelper(
       {Key? key,
       this.willPop = false,
       required this.screens,
-      this.tabController,
       this.items,
       this.useSafeArea = true,
       required this.backgroundColor,
@@ -20,11 +19,11 @@ class BottomBarHelper extends StatelessWidget {
       this.screenAnimationDuration = const Duration(milliseconds: 350),
       this.screenAnimationCurve = Curves.easeIn,
       required this.navBarStyle,
+      this.initialIndex = 0,
       this.onItemSelected})
       : super(key: key);
   final bool willPop;
   final List<Widget> screens;
-  final PersistentTabController? tabController;
   final List<PersistentBottomNavBarItem>? items;
   final bool useSafeArea;
   final Color backgroundColor;
@@ -39,41 +38,68 @@ class BottomBarHelper extends StatelessWidget {
   final Curve screenAnimationCurve;
   final NavBarStyle navBarStyle;
   final Function(int)? onItemSelected;
+  final int initialIndex;
+
+  @override
+  State<BottomBarHelper> createState() => _BottomBarHelperState();
+}
+
+class _BottomBarHelperState extends State<BottomBarHelper> {
+  late PersistentTabController _persistentTabController;
+  @override
+  void initState() {
+    super.initState();
+    _persistentTabController =
+        PersistentTabController(initialIndex: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _persistentTabController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-        onWillPop: () async => willPop,
+        onWillPop: () async => widget.willPop,
         child: PersistentTabView(
           context,
-          screens: screens,
-          controller: tabController,
-          items: items,
-          onItemSelected: onItemSelected ?? null,
-          confineInSafeArea: useSafeArea,
-          backgroundColor: backgroundColor,
-          hideNavigationBarWhenKeyboardShows: hideNavBarWhenKeyboardShows,
-          padding: navbarPadding ?? NavBarPadding.all(0),
+          screens: widget.screens,
+          controller: _persistentTabController,
+          items: widget.items,
+          onItemSelected: (int index) {
+            if (widget.onItemSelected != null) {
+              widget.onItemSelected!(index);
+            }
+            _persistentTabController.jumpToTab(index);
+          },
+          confineInSafeArea: widget.useSafeArea,
+          backgroundColor: widget.backgroundColor,
+          hideNavigationBarWhenKeyboardShows:
+              widget.hideNavBarWhenKeyboardShows,
+          padding: widget.navbarPadding ?? NavBarPadding.all(0),
           decoration: NavBarDecoration(
             boxShadow: [
               BoxShadow(
-                color: shadowColor,
+                color: widget.shadowColor,
               )
             ],
-            colorBehindNavBar: colorBehindNavbar,
+            colorBehindNavBar: widget.colorBehindNavbar,
           ),
-          navBarHeight: navBarHeight,
+          navBarHeight: widget.navBarHeight,
           itemAnimationProperties: ItemAnimationProperties(
             // Navigation Bar's items animation properties.
-            duration: itemAnimationDuration,
-            curve: itemAnimationCurve,
+            duration: widget.itemAnimationDuration,
+            curve: widget.itemAnimationCurve,
           ),
           screenTransitionAnimation: ScreenTransitionAnimation(
             // Screen transition animation on change of selected tab.
             animateTabTransition: true,
-            curve: screenAnimationCurve,
-            duration: screenAnimationDuration,
+            curve: widget.screenAnimationCurve,
+            duration: widget.screenAnimationDuration,
           ),
-          navBarStyle: navBarStyle,
+          navBarStyle: widget.navBarStyle,
         ));
   }
 }
