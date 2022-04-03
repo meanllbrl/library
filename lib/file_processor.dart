@@ -111,6 +111,18 @@ class FileProccessor {
     }
   }
 
+  static Future<void> deleteFromStorage(String refFromUrl, String path) async {
+    try {
+      await FirebaseStorage.instance
+          .refFromURL(refFromUrl)
+          .child(path)
+          .delete();
+    } catch (e) {
+      print("SİLİNEMEDİ!!!");
+      print(e.toString());
+    }
+  }
+
   Future<void> cancel() async {
     if (this.retFromUrl == null) {
       if (onError != null) onError!(Errors.missingRef);
