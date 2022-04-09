@@ -65,7 +65,7 @@ class LocalDBService {
       tables.forEach((table) {
         batch.execute(
             """ 
-        CREATE TABLE ${table.tableName} 
+        CREATE TABLE IF NOT EXISTS ${table.tableName} 
         (${table.parameters})
         """,
           );
