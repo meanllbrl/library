@@ -41,7 +41,7 @@ class LocalDBService {
       var batch = _DATABASE!.batch();
        batch.execute(
           """ 
-        CREATE TABLE $tableName 
+        CREATE TABLE IF NOT EXISTS $tableName 
         ($parameters)
         """,
         );
