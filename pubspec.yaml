@@ -3,6 +3,7 @@ description: Mean Software Library
 version: 0.0.1
 homepage:
 
+
 environment:
   sdk: ">=2.12.0 <3.0.0"
   flutter: ">=1.17.0"
@@ -22,6 +23,9 @@ dependencies:
   cloud_firestore:
   path_provider:
   sqflite: ^2.0.1
+  flutter_local_notifications: ^9.7.0
+  timezone: ^0.8.0
+  flutter_native_timezone: ^2.0.0
 
 
 
