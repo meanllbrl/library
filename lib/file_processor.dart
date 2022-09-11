@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 
 enum IPtype { image, audio, video, media, any }
+
 enum Errors { largeFile, missingRef, noPickedFile, cantCompress }
 
 class FileProccessor {
@@ -28,10 +29,7 @@ class FileProccessor {
       this.ended});
 
   //desteklnen formatlarda dosyayı alıp döndürüyor
-  static Future<File> getFile(
-      {IPtype fileType = IPtype.image,
-      int maxSizeAsMB = 5,
-      Function(Errors errorCode)? onError}) async {
+  static Future<File> getFile({IPtype fileType = IPtype.image, int maxSizeAsMB = 5, Function(Errors errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -61,11 +59,41 @@ class FileProccessor {
     return file;
   }
 
+  static Future<List<File>> getMultipleFiles({IPtype fileType = IPtype.image, int maxSizeAsMB = 5, Function(Errors errorCode)? onError}) async {
+    //Dosya alan metod
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: fileType == IPtype.any
+          ? FileType.any
+          : fileType == IPtype.audio
+              ? FileType.audio
+              : fileType == IPtype.image
+                  ? FileType.image
+                  : fileType == IPtype.media
+                      ? FileType.media
+                      : FileType.video,
+    );
+    if (result == null) {
+      if (onError != null) onError(Errors.noPickedFile);
+
+      throw NoPickedFile.error();
+    }
+    final path = List.generate(result.files.length, (index) => result.files[index].path);
+    List<File> files = List.generate(path.length, (index) => File(path[index]!));
+    files.forEach((element) {
+      double fileSizeMB = element.lengthSync() / (1024 * 1024);
+      if (fileSizeMB > maxSizeAsMB) {
+        if (onError != null) onError(Errors.largeFile);
+
+        throw LargeFileError.error();
+      }
+    });
+
+    return files;
+  }
+
   Future<String> _downloadUrl(path) async {
-    return await FirebaseStorage.instance
-        .refFromURL(this.retFromUrl)
-        .child(path)
-        .getDownloadURL();
+    return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(path).getDownloadURL();
   }
 
   Future<File> _compressFile(File file, int quality) async {
@@ -93,11 +121,7 @@ class FileProccessor {
       if (this.compress) {
         theFile = await _compressFile(file, this.compressQuality ?? 25);
       }
-      return await FirebaseStorage.instance
-          .refFromURL(this.retFromUrl)
-          .child(photoName)
-          .putFile(theFile)
-          .then((p0) async {
+      return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).putFile(theFile).then((p0) async {
         return await _downloadUrl(photoName).then((url) {
           //url burda dönüyor
           if (ended != null) {
@@ -113,10 +137,7 @@ class FileProccessor {
 
   static Future<void> deleteFromStorage(String refFromUrl, String path) async {
     try {
-      await FirebaseStorage.instance
-          .refFromURL(refFromUrl)
-          .child(path)
-          .delete();
+      await FirebaseStorage.instance.refFromURL(refFromUrl).child(path).delete();
     } catch (e) {
       print("SİLİNEMEDİ!!!");
       print(e.toString());
@@ -129,10 +150,7 @@ class FileProccessor {
 
       throw MissingRefURL.error();
     }
-    await FirebaseStorage.instance
-        .refFromURL(this.retFromUrl)
-        .child(photoName)
-        .delete();
+    await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).delete();
   }
 }
 
