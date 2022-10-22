@@ -32,6 +32,7 @@ class FileProccessor {
   static Future<File> getFile({IPtype fileType = IPtype.image, int maxSizeAsMB = 5, Function(Errors errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
+      
       allowMultiple: false,
       type: fileType == IPtype.any
           ? FileType.any
@@ -122,6 +123,30 @@ class FileProccessor {
         theFile = await _compressFile(file, this.compressQuality ?? 25);
       }
       return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).putFile(theFile).then((p0) async {
+        return await _downloadUrl(photoName).then((url) {
+          //url burda dönüyor
+          if (ended != null) {
+            ended!(url);
+          }
+          return url;
+        });
+      });
+    } else {
+      return "";
+    }
+  }  Future<String> uploadVideotoFirebase(File? file) async {
+    if (this.retFromUrl.isEmpty) {
+      throw MissingRefURL.error();
+    }
+    if (started != null) {
+      started!();
+    }
+    if (file != null) {
+      File theFile = file;
+      if (this.compress) {
+        theFile = await _compressFile(file, this.compressQuality ?? 25);
+      }
+      return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).putFile(theFile,SettableMetadata(contentType: 'video/mp4')).then((p0) async {
         return await _downloadUrl(photoName).then((url) {
           //url burda dönüyor
           if (ended != null) {
