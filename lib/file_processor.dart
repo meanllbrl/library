@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
+import 'dart:developer';
 
 enum IPtype { image, audio, video, media, any }
 
@@ -32,7 +33,6 @@ class FileProccessor {
   static Future<File> getFile({IPtype fileType = IPtype.image, int maxSizeAsMB = 5, Function(Errors errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
-      
       allowMultiple: false,
       type: fileType == IPtype.any
           ? FileType.any
@@ -125,6 +125,7 @@ class FileProccessor {
       return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).putFile(theFile).then((p0) async {
         return await _downloadUrl(photoName).then((url) {
           //url burda dönüyor
+
           if (ended != null) {
             ended!(url);
           }
@@ -134,7 +135,9 @@ class FileProccessor {
     } else {
       return "";
     }
-  }  Future<String> uploadVideotoFirebase(File? file) async {
+  }
+
+  Future<String> uploadVideotoFirebase(File? file) async {
     if (this.retFromUrl.isEmpty) {
       throw MissingRefURL.error();
     }
@@ -146,7 +149,11 @@ class FileProccessor {
       if (this.compress) {
         theFile = await _compressFile(file, this.compressQuality ?? 25);
       }
-      return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).putFile(theFile,SettableMetadata(contentType: 'video/mp4')).then((p0) async {
+      return await FirebaseStorage.instance
+          .refFromURL(this.retFromUrl)
+          .child(photoName)
+          .putFile(theFile, SettableMetadata(contentType: 'video/mp4'))
+          .then((p0) async {
         return await _downloadUrl(photoName).then((url) {
           //url burda dönüyor
           if (ended != null) {
@@ -159,6 +166,14 @@ class FileProccessor {
       return "";
     }
   }
+
+ static Future<double> getFileSize(String filepath) async {
+    var file = File(filepath);
+    int bytes = await file.length();
+    if (bytes <= 0) return 0;
+
+    return bytes / (1024*1024);  
+}
 
   static Future<void> deleteFromStorage(String refFromUrl, String path) async {
     try {
@@ -205,4 +220,8 @@ class CantCompress {
   static error() {
     return {"code": 333, "message": "This file type is not image!"};
   }
+}
+
+enum SizeOptions{
+  kb,mb,gb
 }
