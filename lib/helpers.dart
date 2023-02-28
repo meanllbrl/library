@@ -1,4 +1,6 @@
 //sayfa geçişlerini sağlayacak sınıf
+import 'dart:io';
+
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
@@ -6,11 +8,11 @@ import 'package:page_transition/page_transition.dart';
 class NavigationHelper {
   //navgation normally with animation
   static void goPage(context,
-      {required Widget path, PageTransitionType? transitionType}) {
+      {required Widget path, PageTransitionType? transitionType,Alignment? alignment}) {
     Navigator.push(
         context,
         PageTransition(
-            type: transitionType ?? PageTransitionType.fade, child: path));
+            type: transitionType ?? PageTransitionType.fade, child: path,isIos: Platform.isIOS,alignment: alignment));
   }
 
   //go with name
@@ -20,11 +22,12 @@ class NavigationHelper {
 
   //navgation replacement with animation
   static void goPageReplace(context,
-      {required Widget path, PageTransitionType? transitionType}) {
+      {required Widget path, PageTransitionType? transitionType,Alignment? alignment}) {
     Navigator.pushReplacement(
         context,
         PageTransition(
-            type: transitionType ?? PageTransitionType.fade, child: path));
+            type: transitionType ?? PageTransitionType.fade, child: path
+            ,isIos: Platform.isIOS,alignment: alignment));
   }
 
   //go named and replace
@@ -34,11 +37,11 @@ class NavigationHelper {
 
   //go and close
   static void goAndRemove(context,
-      {required Widget path, PageTransitionType? transitionType}) {
+      {required Widget path, PageTransitionType? transitionType,Alignment? alignment}) {
     Navigator.pushAndRemoveUntil(
         context,
         PageTransition(
-            type: transitionType ?? PageTransitionType.fade, child: path),
+            type: transitionType ?? PageTransitionType.fade, child: path,isIos: Platform.isIOS,alignment: alignment),
         (route) => false);
   }
 
