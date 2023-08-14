@@ -2,7 +2,6 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
-import 'dart:developer';
 
 enum IPtype { image, audio, video, media, any }
 
@@ -30,7 +29,10 @@ class FileProccessor {
       this.ended});
 
   //desteklnen formatlarda dosyayı alıp döndürüyor
-  static Future<File> getFile({IPtype fileType = IPtype.image, int maxSizeAsMB = 5, Function(Errors errorCode)? onError}) async {
+  static Future<File> getFile(
+      {IPtype fileType = IPtype.image,
+      int maxSizeAsMB = 5,
+      Function(Errors errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -50,17 +52,13 @@ class FileProccessor {
       throw NoPickedFile.error();
     }
     final path = result.files.single.path;
-    File file = File(path!);
-    double fileSizeMB = file.lengthSync() / (1024 * 1024);
-    if (fileSizeMB > maxSizeAsMB) {
-      if (onError != null) onError(Errors.largeFile);
-
-      throw LargeFileError.error();
-    }
-    return file;
+    return File(path!);
   }
 
-  static Future<List<File>> getMultipleFiles({IPtype fileType = IPtype.image, int maxSizeAsMB = 5, Function(Errors errorCode)? onError}) async {
+  static Future<List<File>> getMultipleFiles(
+      {IPtype fileType = IPtype.image,
+      int maxSizeAsMB = 5,
+      Function(Errors errorCode)? onError}) async {
     //Dosya alan metod
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -79,38 +77,42 @@ class FileProccessor {
 
       throw NoPickedFile.error();
     }
-    final path = List.generate(result.files.length, (index) => result.files[index].path);
-    List<File> files = List.generate(path.length, (index) => File(path[index]!));
-    files.forEach((element) {
-      double fileSizeMB = element.lengthSync() / (1024 * 1024);
-      if (fileSizeMB > maxSizeAsMB) {
-        if (onError != null) onError(Errors.largeFile);
-
-        throw LargeFileError.error();
-      }
-    });
-
-    return files;
+    final path =
+        List.generate(result.files.length, (index) => result.files[index].path);
+    return List.generate(path.length, (index) => File(path[index]!));
   }
 
   Future<String> _downloadUrl(path) async {
-    return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(path).getDownloadURL();
+    return await FirebaseStorage.instance
+        .refFromURL(this.retFromUrl)
+        .child(path)
+        .getDownloadURL();
   }
 
-  Future<File> _compressFile(File file, int quality) async {
-    if (IPtype.image == fileType) {
+  Future<File> _compressFile(
+      File file, int quality, IPtype fileType, double targetSizeInMB) async {
+    if (fileType == IPtype.image) {
       File compressedFile = await FlutterNativeImage.compressImage(
         file.path,
         quality: quality,
       );
-      return compressedFile;
-    }
-    if (onError != null) onError!(Errors.cantCompress);
 
-    throw CantCompress();
+      while (compressedFile.lengthSync() > targetSizeInMB * 1024 * 1024) {
+        quality -= 10;
+        compressedFile = await FlutterNativeImage.compressImage(
+          file.path,
+          quality: quality,
+        );
+      }
+
+      return compressedFile;
+    } else {
+      return file;
+    }
   }
 
-  Future<String> uploadFiletoFirebase(File? file) async {
+  Future<String> uploadFiletoFirebase(
+      File? file, double maxSizeAsMegabyte) async {
     if (this.retFromUrl.isEmpty) {
       throw MissingRefURL.error();
     }
@@ -120,9 +122,14 @@ class FileProccessor {
     if (file != null) {
       File theFile = file;
       if (this.compress) {
-        theFile = await _compressFile(file, this.compressQuality ?? 25);
+        theFile = await _compressFile(
+            file, this.compressQuality ?? 25, IPtype.image, maxSizeAsMegabyte);
       }
-      return await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).putFile(theFile).then((p0) async {
+      return await FirebaseStorage.instance
+          .refFromURL(this.retFromUrl)
+          .child(photoName)
+          .putFile(theFile)
+          .then((p0) async {
         return await _downloadUrl(photoName).then((url) {
           //url burda dönüyor
 
@@ -147,7 +154,8 @@ class FileProccessor {
     if (file != null) {
       File theFile = file;
       if (this.compress) {
-        theFile = await _compressFile(file, this.compressQuality ?? 25);
+        theFile = await _compressFile(
+            file, this.compressQuality ?? 25, IPtype.video, maxSizeAsMB);
       }
       return await FirebaseStorage.instance
           .refFromURL(this.retFromUrl)
@@ -167,17 +175,20 @@ class FileProccessor {
     }
   }
 
- static Future<double> getFileSize(String filepath) async {
+  static Future<double> getFileSize(String filepath) async {
     var file = File(filepath);
     int bytes = await file.length();
     if (bytes <= 0) return 0;
 
-    return bytes / (1024*1024);  
-}
+    return bytes / (1024 * 1024);
+  }
 
   static Future<void> deleteFromStorage(String refFromUrl, String path) async {
     try {
-      await FirebaseStorage.instance.refFromURL(refFromUrl).child(path).delete();
+      await FirebaseStorage.instance
+          .refFromURL(refFromUrl)
+          .child(path)
+          .delete();
     } catch (e) {
       print("SİLİNEMEDİ!!!");
       print(e.toString());
@@ -190,7 +201,10 @@ class FileProccessor {
 
       throw MissingRefURL.error();
     }
-    await FirebaseStorage.instance.refFromURL(this.retFromUrl).child(photoName).delete();
+    await FirebaseStorage.instance
+        .refFromURL(this.retFromUrl)
+        .child(photoName)
+        .delete();
   }
 }
 
@@ -222,6 +236,4 @@ class CantCompress {
   }
 }
 
-enum SizeOptions{
-  kb,mb,gb
-}
+enum SizeOptions { kb, mb, gb }
