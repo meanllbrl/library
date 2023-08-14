@@ -112,7 +112,7 @@ class FileProccessor {
   }
 
   Future<String> uploadFiletoFirebase(
-      File? file, double maxSizeAsMegabyte) async {
+      File? file,) async {
     if (this.retFromUrl.isEmpty) {
       throw MissingRefURL.error();
     }
@@ -123,7 +123,7 @@ class FileProccessor {
       File theFile = file;
       if (this.compress) {
         theFile = await _compressFile(
-            file, this.compressQuality ?? 25, IPtype.image, maxSizeAsMegabyte);
+            file, this.compressQuality ?? 25, IPtype.image, maxSizeAsMB);
       }
       return await FirebaseStorage.instance
           .refFromURL(this.retFromUrl)
