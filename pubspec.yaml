@@ -23,9 +23,6 @@ dependencies:
   cloud_firestore:
   path_provider:
   sqflite: ^2.0.1
-  flutter_local_notifications: 
-  timezone: ^0.8.0
-  flutter_native_timezone: ^2.0.0
   flutter_localizations:
     sdk: flutter
 
