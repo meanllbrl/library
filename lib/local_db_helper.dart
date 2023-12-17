@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:mean_lib/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,7 +28,6 @@ class LocalDBService {
   Future<void> close() async {
     if (_DATABASE != null) {
       if (_DATABASE!.isOpen) {
-        Logger.success("Database Kapatılıyor");
         await _DATABASE!.close();
       }
     }
