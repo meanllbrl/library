@@ -1,7 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter_native_image/flutter_native_image.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 /// Enum representing different types of intellectual property file types.
 enum IPtype { image, audio, video, media, any }
@@ -294,11 +294,7 @@ class FileProcessor {
   /// Returns a [File] object of the compressed image. If the file is already smaller than 500 KB
   /// or the file type is not an image, the method returns the original file.
   Future<File> _compressFile(
-    File file,
-    int quality,
-    IPtype fileType,
-    double targetSizeInMB
-  ) async {
+      File file, int quality, IPtype fileType, double targetSizeInMB) async {
     const int fileSizeThreshold = 500 * 1024; // 500 KB
 
     // Check if the file size is already less than 500 KB.
@@ -306,26 +302,29 @@ class FileProcessor {
       // No need to compress, return the original file.
       return file;
     }
-    
+
     // Compressions only applied to images.
     if (fileType == IPtype.image) {
       // Initialize a compressed file by compressing the original image file.
-      File compressedFile = await FlutterNativeImage.compressImage(
+      File compressedFile = await FlutterImageCompress.compressAndGetFile(
+        file.path,
         file.path,
         quality: quality,
-      );
+      ).then((value) => File((value?.path ?? file.path)));
 
       // Continue to compress in a loop until the file size is under the threshold
       // or the file size meets the target size.
       while (compressedFile.lengthSync() > fileSizeThreshold &&
-        compressedFile.lengthSync() > targetSizeInMB * 1024 * 1024) {
+          compressedFile.lengthSync() > targetSizeInMB * 1024 * 1024) {
         // Reduce the quality incrementally for further compression.
-        quality = (quality - 10).clamp(0, 100); // Ensure the quality doesn't go below 0
+        quality = (quality - 10)
+            .clamp(0, 100); // Ensure the quality doesn't go below 0
         // Compress the image again with the new quality.
-        compressedFile = await FlutterNativeImage.compressImage(
+        compressedFile = await FlutterImageCompress.compressAndGetFile(
+          file.path,
           file.path,
           quality: quality,
-        );
+        ).then((value) => File((value?.path ?? file.path)));
       }
 
       // Return the final compressed image file.
@@ -335,7 +334,6 @@ class FileProcessor {
       return file;
     }
   }
-
 }
 
 class MissingRefURL implements Exception {
