@@ -137,6 +137,8 @@ class FileProcessor {
     return paths.map((path) => File(path!)).toList();
   }
 
+  /// **DEPRECATED**
+  ///
   /// Uploads a file to Firebase Storage and provides the download URL upon completion.
   ///
   /// [file] is the file to be uploaded. If null, an empty string is returned.
@@ -145,7 +147,7 @@ class FileProcessor {
   /// The file will be compressed if the [compress] property is true.
   ///
   /// Returns the download URL as a string.
-  Future<String> uploadFiletoFirebaseNew(File? file) async {
+  Future<String> uploadFiletoFirebase(File? file) async {
     // Throw an error if the Firebase Cloud Functions URL is not set.
     if (firebaseCloudFunctionsRootUrl == null ||
         firebaseCloudFunctionsRootUrl!.isEmpty) {
@@ -188,7 +190,6 @@ class FileProcessor {
     }
   }
 
-  /// **DEPRECATED**
   /// Uploads a file to Firebase Storage and provides the download URL upon completion.
   ///
   /// [file] is the file to be uploaded. If null, an empty string is returned.
@@ -197,7 +198,51 @@ class FileProcessor {
   /// The file will be compressed if the [compress] property is true.
   ///
   /// Returns the download URL as a string.
-  Future<UploadedFile?> uploadFiletoFirebase(File? file) async {
+  static Future<UploadedFile?> loadFileToFirebaseStorage(
+    File? file, {
+    required String firebaseCloudFunctionsRootUrl,
+    required String pathName,
+    double? compressFileToTheSizeAsMb,
+  }) async {
+    if (file != null) {
+      var theFile = file;
+
+      // Compress the file if the 'compress' flag is true.
+      if (compressFileToTheSizeAsMb != null) {
+        theFile = await _compressFile(
+            file, 25, IPtype.image, compressFileToTheSizeAsMb);
+      }
+
+      try {
+        // Begin the upload process to Firebase Storage.
+        final ref = FirebaseStorage.instance
+            .refFromURL(firebaseCloudFunctionsRootUrl!)
+            .child(pathName);
+
+        // Upload the file and obtain the task snapshot.
+        final taskSnapshot = await ref.putFile(theFile);
+
+        // Retrieve and return the download URL.
+        final url = await taskSnapshot.ref.getDownloadURL();
+        return UploadedFile(url: url, path: pathName);
+      } on FirebaseException {
+        rethrow; // Optional: rethrow to allow further upstream handling.
+      }
+    } else {
+      return null; // Consider throwing an exception instead.
+    }
+  }
+
+  ///
+  /// Uploads a file to Firebase Storage and provides the download URL upon completion.
+  ///
+  /// [file] is the file to be uploaded. If null, an empty string is returned.
+  /// The method checks if [firebaseCloudFunctionsRootUrl] is set, otherwise it throws an exception.
+  /// If the [onStarted] callback is provided, it's called at the beginning of the process.
+  /// The file will be compressed if the [compress] property is true.
+  ///
+  /// Returns the download URL as a string.
+  Future<UploadedFile?> uploadFiletoFirebaseNew(File? file) async {
     // Throw an error if the Firebase Cloud Functions URL is not set.
     if (firebaseCloudFunctionsRootUrl == null ||
         firebaseCloudFunctionsRootUrl!.isEmpty) {
@@ -345,7 +390,7 @@ class FileProcessor {
   ///
   /// Returns a [File] object of the compressed image. If the file is already smaller than 500 KB
   /// or the file type is not an image, the method returns the original file.
-  Future<File> _compressFile(
+  static Future<File> _compressFile(
       File file, int quality, IPtype fileType, double targetSizeInMB) async {
     const int fileSizeThreshold = 500 * 1024; // 500 KB
 
