@@ -145,7 +145,7 @@ class FileProcessor {
   /// The file will be compressed if the [compress] property is true.
   ///
   /// Returns the download URL as a string.
-  Future<String> uploadFiletoFirebase(File? file) async {
+  Future<String> uploadFiletoFirebaseNew(File? file) async {
     // Throw an error if the Firebase Cloud Functions URL is not set.
     if (firebaseCloudFunctionsRootUrl == null ||
         firebaseCloudFunctionsRootUrl!.isEmpty) {
@@ -185,6 +185,58 @@ class FileProcessor {
     } else {
       if (onError != null) onError!(Errors.noPickedFile);
       return ""; // Consider throwing an exception instead.
+    }
+  }
+
+  /// **DEPRECATED**
+  /// Uploads a file to Firebase Storage and provides the download URL upon completion.
+  ///
+  /// [file] is the file to be uploaded. If null, an empty string is returned.
+  /// The method checks if [firebaseCloudFunctionsRootUrl] is set, otherwise it throws an exception.
+  /// If the [onStarted] callback is provided, it's called at the beginning of the process.
+  /// The file will be compressed if the [compress] property is true.
+  ///
+  /// Returns the download URL as a string.
+  Future<UploadedFile?> uploadFiletoFirebase(File? file) async {
+    // Throw an error if the Firebase Cloud Functions URL is not set.
+    if (firebaseCloudFunctionsRootUrl == null ||
+        firebaseCloudFunctionsRootUrl!.isEmpty) {
+      throw MissingRefURL();
+    }
+
+    // Invoke the onStarted callback, if provided.
+    if (onStarted != null) onStarted!();
+
+    if (file != null) {
+      var theFile = file;
+
+      // Compress the file if the 'compress' flag is true.
+      if (this.compress) {
+        theFile = await _compressFile(
+            file, this.compressQuality ?? 25, IPtype.image, maxSizeAsMB);
+      }
+
+      try {
+        // Begin the upload process to Firebase Storage.
+        final ref = FirebaseStorage.instance
+            .refFromURL(firebaseCloudFunctionsRootUrl!)
+            .child(photoName);
+
+        // Upload the file and obtain the task snapshot.
+        final taskSnapshot = await ref.putFile(theFile);
+
+        // Retrieve and return the download URL.
+        final url = await taskSnapshot.ref.getDownloadURL();
+        if (onEnded != null) onEnded!(url);
+        return UploadedFile(url: url, path: photoName);
+      } on FirebaseException {
+        if (onError != null) onError!(Errors.cantCompress);
+
+        rethrow; // Optional: rethrow to allow further upstream handling.
+      }
+    } else {
+      if (onError != null) onError!(Errors.noPickedFile);
+      return null;
     }
   }
 
@@ -377,3 +429,10 @@ class CantCompress implements Exception {
 }
 
 enum SizeOptions { kb, mb, gb }
+
+class UploadedFile {
+  final String url;
+  final String path;
+
+  UploadedFile({required this.url, required this.path});
+}
