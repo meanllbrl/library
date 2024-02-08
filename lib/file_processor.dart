@@ -411,8 +411,11 @@ class FileProcessor {
 
       // Continue to compress in a loop until the file size is under the threshold
       // or the file size meets the target size.
+      int cycleCount = 10;
       while (compressedFile.lengthSync() > fileSizeThreshold &&
           compressedFile.lengthSync() > targetSizeInMB * 1024 * 1024) {
+        cycleCount--;
+
         // Reduce the quality incrementally for further compression.
         quality = (quality - 10)
             .clamp(0, 100); // Ensure the quality doesn't go below 0
@@ -422,6 +425,9 @@ class FileProcessor {
           file.path,
           quality: quality,
         ).then((value) => File((value?.path ?? file.path)));
+        if (cycleCount == 0) {
+          break;
+        }
       }
 
       // Return the final compressed image file.
