@@ -1,7 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:math';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Enum representing different types of intellectual property file types.
 enum IPtype { image, audio, video, media, any }
@@ -402,10 +404,16 @@ class FileProcessor {
 
     // Compressions only applied to images.
     if (fileType == IPtype.image) {
+      Directory appDir = await getApplicationDocumentsDirectory();
+      String directory = appDir.path;
+      String fileName = file.path.split('/').last;
+      String compressedFileName = fileName.replaceAll('.', '_compressed.');
+
+      String compressedFilePath() => '$directory/$compressedFileName';
       // Initialize a compressed file by compressing the original image file.
       File compressedFile = await FlutterImageCompress.compressAndGetFile(
         file.path,
-        file.path,
+        compressedFilePath(),
         quality: quality,
       ).then((value) => File((value?.path ?? file.path)));
 
@@ -415,14 +423,14 @@ class FileProcessor {
       while (compressedFile.lengthSync() > fileSizeThreshold &&
           compressedFile.lengthSync() > targetSizeInMB * 1024 * 1024) {
         cycleCount--;
-
+        compressedFileName = fileName.replaceAll('.', '_compressed$cycleCount.');
         // Reduce the quality incrementally for further compression.
         quality = (quality - 10)
             .clamp(0, 100); // Ensure the quality doesn't go below 0
         // Compress the image again with the new quality.
         compressedFile = await FlutterImageCompress.compressAndGetFile(
           file.path,
-          file.path,
+          compressedFilePath(),
           quality: quality,
         ).then((value) => File((value?.path ?? file.path)));
         if (cycleCount == 0) {
