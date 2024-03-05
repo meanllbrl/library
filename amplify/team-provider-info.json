@@ -1,0 +1,23 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-vango-dev-211205-authRole",
+      "UnauthRoleArn": "arn:aws:iam::637423397996:role/amplify-vango-dev-211205-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::637423397996:role/amplify-vango-dev-211205-authRole",
+      "Region": "eu-central-1",
+      "DeploymentBucketName": "amplify-vango-dev-211205-deployment",
+      "UnauthRoleName": "amplify-vango-dev-211205-unauthRole",
+      "StackName": "amplify-vango-dev-211205",
+      "StackId": "arn:aws:cloudformation:eu-central-1:637423397996:stack/amplify-vango-dev-211205/e123e510-db1b-11ee-bb51-0684a0e52aa1",
+      "AmplifyAppId": "d8v6bjvnm0q32"
+    },
+    "categories": {
+      "auth": {
+        "vango8f554e2a": {}
+      },
+      "storage": {
+        "s339f3b4ef": {}
+      }
+    }
+  }
+}

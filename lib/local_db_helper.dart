@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
+// ignore: non_constant_identifier_names
 Database? _DATABASE;
 
 class LocalDBService {
@@ -37,13 +38,13 @@ class LocalDBService {
   void create({required String tableName, required String parameters}) async {
     await _init().then((db) async {
       var batch = _DATABASE!.batch();
-       batch.execute(
-          """ 
+      batch.execute(
+        """ 
         CREATE TABLE IF NOT EXISTS $tableName 
         ($parameters)
         """,
-        );
-     /* _tableIsEmpty(tableName, _DATABASE, () async {
+      );
+      /* _tableIsEmpty(tableName, _DATABASE, () async {
         batch.execute(
           """ 
         CREATE TABLE $tableName 
@@ -62,12 +63,12 @@ class LocalDBService {
       var batch = _DATABASE!.batch();
       tables.forEach((table) {
         batch.execute(
-            """ 
+          """ 
         CREATE TABLE IF NOT EXISTS ${table.tableName} 
         (${table.parameters})
         """,
-          );
-      /*  _tableIsEmpty(table.tableName, _DATABASE, () async {
+        );
+        /*  _tableIsEmpty(table.tableName, _DATABASE, () async {
           batch.execute(
             """ 
         CREATE TABLE ${table.tableName} 
@@ -115,7 +116,7 @@ class LocalDBService {
   }
 
   //READ DATA FROM TABLE
-  Future<List<dynamic?>> read(
+  Future<List<dynamic>> read(
       {required String parameters,
       required String tableName,
       String? lastStatement = "",
@@ -183,6 +184,7 @@ class LocalDBService {
   //LOOKS IF TABLE HAS ANY DATA
   void _tableIsEmpty(String tableName, db, Function ifNotExist) async {
     try {
+      // ignore: unused_local_variable
       int? count = Sqflite.firstIntValue(
           await db.rawQuery('SELECT COUNT(*) FROM $tableName'));
     } catch (e) {

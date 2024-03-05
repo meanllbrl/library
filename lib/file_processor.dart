@@ -1,9 +1,10 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'dart:math';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:aws_common/vm.dart';
 
 /// Enum representing different types of intellectual property file types.
 enum IPtype { image, audio, video, media, any }
@@ -218,7 +219,7 @@ class FileProcessor {
       try {
         // Begin the upload process to Firebase Storage.
         final ref = FirebaseStorage.instance
-            .refFromURL(firebaseCloudFunctionsRootUrl!)
+            .refFromURL(firebaseCloudFunctionsRootUrl)
             .child(pathName);
 
         // Upload the file and obtain the task snapshot.
@@ -227,6 +228,42 @@ class FileProcessor {
         // Retrieve and return the download URL.
         final url = await taskSnapshot.ref.getDownloadURL();
         return UploadedFile(url: url, path: pathName);
+      } on FirebaseException {
+        rethrow; // Optional: rethrow to allow further upstream handling.
+      }
+    } else {
+      return null; // Consider throwing an exception instead.
+    }
+  }
+
+  /// Uploads a file to AWS S3 and provides the download URL upon completion.
+  ///
+  /// [file] is the file to be uploaded. If null, an empty string is returned.
+  ///
+  /// Returns the download URL as a string.
+  static Future<UploadedFile?> loadFileToAwsS3(
+    File? file, {
+    required String pathName,
+    double? compressFileToTheSizeAsMb,
+  }) async {
+    if (file != null) {
+      var theFile = file;
+
+      // Compress the file if the 'compress' flag is true.
+      if (compressFileToTheSizeAsMb != null) {
+        theFile = await _compressFile(
+            file, 25, IPtype.image, compressFileToTheSizeAsMb);
+      }
+
+      try {
+        final awsFile = AWSFilePlatform.fromFile(theFile);
+        final uploadResult = await Amplify.Storage.uploadFile(
+          localFile: awsFile,
+          key: pathName,
+        ).result;
+        final result = await Amplify.Storage.getUrl(key: uploadResult.uploadedItem.key).result;
+
+        return UploadedFile(url: result.url.toString(), path: pathName);
       } on FirebaseException {
         rethrow; // Optional: rethrow to allow further upstream handling.
       }
@@ -423,7 +460,8 @@ class FileProcessor {
       while (compressedFile.lengthSync() > fileSizeThreshold &&
           compressedFile.lengthSync() > targetSizeInMB * 1024 * 1024) {
         cycleCount--;
-        compressedFileName = fileName.replaceAll('.', '_compressed$cycleCount.');
+        compressedFileName =
+            fileName.replaceAll('.', '_compressed$cycleCount.');
         // Reduce the quality incrementally for further compression.
         quality = (quality - 10)
             .clamp(0, 100); // Ensure the quality doesn't go below 0
