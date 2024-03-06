@@ -227,7 +227,10 @@ class FileProcessor {
 
         // Retrieve and return the download URL.
         final url = await taskSnapshot.ref.getDownloadURL();
-        return UploadedFile(url: url, path: pathName);
+        return UploadedFile(
+            url: url,
+            path: pathName,
+            size: theFile.lengthSync() / (1024 * 1024));
       } on FirebaseException {
         rethrow; // Optional: rethrow to allow further upstream handling.
       }
@@ -241,11 +244,10 @@ class FileProcessor {
   /// [file] is the file to be uploaded. If null, an empty string is returned.
   ///
   /// Returns the download URL as a string.
-  static Future<UploadedFile?> loadFileToAwsS3(
-    File? file, {
-    required String pathName,
-    double? compressFileToTheSizeAsMb,
-  }) async {
+  static Future<UploadedFile?> loadFileToAwsS3(File? file,
+      {required String pathName,
+      double? compressFileToTheSizeAsMb,
+      Function(double percentage)? progress}) async {
     if (file != null) {
       var theFile = file;
 
@@ -256,14 +258,23 @@ class FileProcessor {
       }
 
       try {
+        String path = "aws/" + pathName;
         final awsFile = AWSFilePlatform.fromFile(theFile);
         final uploadResult = await Amplify.Storage.uploadFile(
           localFile: awsFile,
-          key: pathName,
+          onProgress: (p0) {
+            if (progress != null) progress(p0.fractionCompleted);
+          },
+          key: path,
         ).result;
-        final result = await Amplify.Storage.getUrl(key: uploadResult.uploadedItem.key).result;
+        final result =
+            await Amplify.Storage.getUrl(key: uploadResult.uploadedItem.key)
+                .result;
 
-        return UploadedFile(url: result.url.toString(), path: pathName);
+        return UploadedFile(
+            url: result.url.toString(),
+            path: path,
+            size: theFile.lengthSync() / (1024 * 1024));
       } on FirebaseException {
         rethrow; // Optional: rethrow to allow further upstream handling.
       }
@@ -312,7 +323,10 @@ class FileProcessor {
         // Retrieve and return the download URL.
         final url = await taskSnapshot.ref.getDownloadURL();
         if (onEnded != null) onEnded!(url);
-        return UploadedFile(url: url, path: photoName);
+        return UploadedFile(
+            url: url,
+            path: photoName,
+            size: theFile.lengthSync() / (1024 * 1024));
       } on FirebaseException {
         if (onError != null) onError!(Errors.cantCompress);
 
@@ -366,10 +380,14 @@ class FileProcessor {
 
   static Future<void> deleteFromStorage(String refFromUrl, String path) async {
     try {
-      await FirebaseStorage.instance
-          .refFromURL(refFromUrl)
-          .child(path)
-          .delete();
+      if (path.split("/").first == "aws") {
+         await Amplify.Storage.remove(key: path).result;
+      } else {
+         await FirebaseStorage.instance
+            .refFromURL(refFromUrl)
+            .child(path)
+            .delete();
+      }
     } catch (e) {
       rethrow;
     }
@@ -530,6 +548,11 @@ enum SizeOptions { kb, mb, gb }
 class UploadedFile {
   final String url;
   final String path;
+  final double size;
 
-  UploadedFile({required this.url, required this.path});
+  UploadedFile({
+    required this.url,
+    required this.path,
+    required this.size,
+  });
 }
