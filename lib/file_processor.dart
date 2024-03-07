@@ -257,7 +257,7 @@ class FileProcessor {
             file, 25, IPtype.image, compressFileToTheSizeAsMb);
       }
 
-      try {
+     
         String path = "aws/" + pathName;
         final awsFile = AWSFilePlatform.fromFile(theFile);
         final uploadResult = await Amplify.Storage.uploadFile(
@@ -275,9 +275,7 @@ class FileProcessor {
             url: result.url.toString(),
             path: path,
             size: theFile.lengthSync() / (1024 * 1024));
-      } on FirebaseException {
-        rethrow; // Optional: rethrow to allow further upstream handling.
-      }
+     
     } else {
       return null; // Consider throwing an exception instead.
     }
