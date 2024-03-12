@@ -1,4 +1,5 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -247,7 +248,7 @@ class FileProcessor {
   static Future<UploadedFile?> loadFileToAwsS3(File? file,
       {required String pathName,
       double? compressFileToTheSizeAsMb,
-      Function(double percentage)? progress}) async {
+      Function(double percentage)? progress,Duration? expireDuration}) async {
     if (file != null) {
       var theFile = file;
 
@@ -268,7 +269,7 @@ class FileProcessor {
           key: path,
         ).result;
         final result =
-            await Amplify.Storage.getUrl(key: uploadResult.uploadedItem.key)
+            await Amplify.Storage.getUrl(key: uploadResult.uploadedItem.key,options: StorageGetUrlOptions(pluginOptions: S3GetUrlPluginOptions(expiresIn: expireDuration??Duration(days: 7))))
                 .result;
 
         return UploadedFile(
